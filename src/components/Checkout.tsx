@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CreditCard, MapPin, User, Mail, Phone, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -25,6 +25,32 @@ export function Checkout({ onBack, onComplete }: CheckoutProps) {
     zipCode: '',
     paymentMethod: 'credit_card',
   });
+
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('users')
+        .select('full_name, phone, address')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile) {
+        const addressParts = profile.address?.split(',').map(s => s.trim()) || [];
+        setFormData(prev => ({
+          ...prev,
+          fullName: profile.full_name || prev.fullName,
+          phone: profile.phone || prev.phone,
+          address: addressParts[0] || prev.address,
+          city: addressParts[1] || prev.city,
+          zipCode: addressParts[2] || prev.zipCode,
+        }));
+      }
+    };
+
+    loadUserProfile();
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +127,22 @@ export function Checkout({ onBack, onComplete }: CheckoutProps) {
         });
 
       if (paymentError) throw paymentError;
+
+      for (const item of items) {
+        const { data: product } = await supabase
+          .from('products')
+          .select('stock_quantity')
+          .eq('id', item.id)
+          .single();
+
+        if (product) {
+          const newQuantity = Math.max(0, product.stock_quantity - item.quantity);
+          await supabase
+            .from('products')
+            .update({ stock_quantity: newQuantity })
+            .eq('id', item.id);
+        }
+      }
 
       clearCart();
       onComplete(order.id);
