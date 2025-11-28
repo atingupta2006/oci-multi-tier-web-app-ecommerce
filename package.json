@@ -6,10 +6,15 @@
   "scripts": {
     "dev": "vite",
     "dev:server": "tsx watch server/index.ts",
+    "dev:worker": "tsx watch server/workers/index.ts",
     "build": "vite build && tsc -p tsconfig.server.json",
     "build:client": "vite build",
     "build:server": "tsc -p tsconfig.server.json",
     "start:server": "node dist/server/index.js",
+    "start:worker": "node dist/server/workers/index.js",
+    "start:worker:email": "WORKER_TYPE=email node dist/server/workers/index.js",
+    "start:worker:order": "WORKER_TYPE=order node dist/server/workers/index.js",
+    "start:worker:payment": "WORKER_TYPE=payment node dist/server/workers/index.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
