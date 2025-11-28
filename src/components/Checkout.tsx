@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CreditCard, MapPin, User, Mail, Phone, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { formatINR } from '../lib/currency';
 
 interface CheckoutProps {
   onBack: () => void;
@@ -171,7 +172,7 @@ export function Checkout({ onBack, onComplete }: CheckoutProps) {
                       onChange={handleChange}
                       required
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="+1 (555) 123-4567"
+                      placeholder="+91 98765 43210"
                     />
                   </div>
                 </div>
@@ -209,7 +210,7 @@ export function Checkout({ onBack, onComplete }: CheckoutProps) {
                         onChange={handleChange}
                         required
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="San Francisco"
+                        placeholder="Mumbai"
                       />
                     </div>
                     <div>
@@ -223,7 +224,7 @@ export function Checkout({ onBack, onComplete }: CheckoutProps) {
                         onChange={handleChange}
                         required
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="94102"
+                        placeholder="400001"
                       />
                     </div>
                   </div>
@@ -259,7 +260,7 @@ export function Checkout({ onBack, onComplete }: CheckoutProps) {
                     Processing...
                   </span>
                 ) : (
-                  `Place Order - $${totalPrice.toFixed(2)}`
+                  `Place Order - ${formatINR(totalPrice)}`
                 )}
               </button>
             </form>
@@ -276,7 +277,7 @@ export function Checkout({ onBack, onComplete }: CheckoutProps) {
                     {item.name} x {item.quantity}
                   </span>
                   <span className="font-medium text-gray-900">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    {formatINR(item.price * item.quantity)}
                   </span>
                 </div>
               ))}
@@ -284,15 +285,15 @@ export function Checkout({ onBack, onComplete }: CheckoutProps) {
             <div className="border-t border-gray-200 pt-4 space-y-2">
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
-                <span className="font-medium">${totalPrice.toFixed(2)}</span>
+                <span className="font-medium">{formatINR(totalPrice)}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Shipping</span>
-                <span className="font-medium">$0.00</span>
+                <span className="font-medium">₹0.00</span>
               </div>
               <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-200">
                 <span>Total</span>
-                <span>${totalPrice.toFixed(2)}</span>
+                <span>{formatINR(totalPrice)}</span>
               </div>
             </div>
           </div>

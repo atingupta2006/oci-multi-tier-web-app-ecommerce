@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Search, DollarSign, Package } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { formatINR } from '../../lib/currency';
 
 interface Product {
   id: string;
@@ -136,7 +137,7 @@ export function AdminProducts() {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right font-semibold text-gray-900">
-                      ${product.price.toFixed(2)}
+                      {formatINR(product.price)}
                     </td>
                     <td className="py-3 px-4 text-right">
                       <span className={`font-medium ${

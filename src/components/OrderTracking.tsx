@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Package, Truck, CheckCircle, Clock, XCircle, ArrowLeft, CreditCard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { formatINR } from '../lib/currency';
 
 interface Order {
   id: string;
@@ -256,8 +257,8 @@ export function OrderTracking({ orderId, onBack }: OrderTrackingProps) {
                     <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-gray-900">${(item.unit_price * item.quantity).toFixed(2)}</p>
-                    <p className="text-sm text-gray-500">${item.unit_price.toFixed(2)} each</p>
+                    <p className="font-semibold text-gray-900">{formatINR(item.unit_price * item.quantity)}</p>
+                    <p className="text-sm text-gray-500">{formatINR(item.unit_price)} each</p>
                   </div>
                 </div>
               ))}
@@ -267,7 +268,7 @@ export function OrderTracking({ orderId, onBack }: OrderTrackingProps) {
           <div className="border-t border-gray-200 pt-6 mt-6">
             <div className="flex justify-between items-center text-xl font-bold text-gray-900">
               <span>Total</span>
-              <span>${selectedOrder.total_amount.toFixed(2)}</span>
+              <span>{formatINR(selectedOrder.total_amount)}</span>
             </div>
           </div>
         </div>
@@ -327,7 +328,7 @@ export function OrderTracking({ orderId, onBack }: OrderTrackingProps) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-gray-900">${order.total_amount.toFixed(2)}</p>
+                      <p className="font-bold text-gray-900">{formatINR(order.total_amount)}</p>
                       <span className={`text-sm font-medium ${config.color}`}>{config.label}</span>
                     </div>
                   </div>

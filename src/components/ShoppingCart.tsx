@@ -1,5 +1,6 @@
 import { ShoppingCart as CartIcon, X, Plus, Minus, Trash2, CreditCard } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { formatINR } from '../lib/currency';
 
 interface ShoppingCartProps {
   isOpen: boolean;
@@ -82,7 +83,7 @@ export function ShoppingCart({ isOpen, onClose, onCheckout }: ShoppingCartProps)
                           </button>
                         </div>
                         <p className="text-lg font-bold text-gray-900">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          {formatINR(item.price * item.quantity)}
                         </p>
                       </div>
                     </div>
@@ -107,15 +108,15 @@ export function ShoppingCart({ isOpen, onClose, onCheckout }: ShoppingCartProps)
             <div className="space-y-3 mb-4">
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
-                <span className="font-medium">${totalPrice.toFixed(2)}</span>
+                <span className="font-medium">{formatINR(totalPrice)}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Shipping</span>
-                <span className="font-medium">$0.00</span>
+                <span className="font-medium">₹0.00</span>
               </div>
               <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-gray-300">
                 <span>Total</span>
-                <span>${totalPrice.toFixed(2)}</span>
+                <span>{formatINR(totalPrice)}</span>
               </div>
             </div>
             <button

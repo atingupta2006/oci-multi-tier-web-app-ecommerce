@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ShoppingCart, User, Package, DollarSign, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Order, OrderItem, Product, Payment, User as UserType } from '../types/database';
+import { formatINR } from '../lib/currency';
 
 interface OrderWithDetails extends Order {
   items?: (OrderItem & { product?: Product })[];
@@ -163,7 +164,7 @@ export function OrderManagement() {
 
                 <div className="text-right">
                   <div className="text-2xl font-bold text-gray-900 mb-1">
-                    ${order.total_amount.toFixed(2)}
+                    {formatINR(order.total_amount)}
                   </div>
                   <div className="text-sm text-gray-600">
                     {order.items?.length || 0} items
@@ -189,7 +190,7 @@ export function OrderManagement() {
                         <div className="flex items-center gap-2">
                           <DollarSign className="w-4 h-4 text-gray-400" />
                           <span className="font-medium text-gray-900">
-                            ${(item.unit_price * item.quantity).toFixed(2)}
+                            {formatINR(item.unit_price * item.quantity)}
                           </span>
                         </div>
                       </div>

@@ -7,10 +7,11 @@ import { ShoppingCart } from './components/ShoppingCart';
 import { Checkout } from './components/Checkout';
 import { OrderTracking } from './components/OrderTracking';
 import { AdminPanel } from './components/AdminPanel';
+import { UserProfile } from './components/UserProfile';
 import { useAuth } from './contexts/AuthContext';
 import { useCart } from './contexts/CartContext';
 
-type View = 'products' | 'orders' | 'checkout' | 'tracking' | 'admin';
+type View = 'products' | 'orders' | 'checkout' | 'tracking' | 'admin' | 'profile';
 
 interface NavItem {
   id: View;
@@ -57,6 +58,8 @@ function App() {
         );
       case 'admin':
         return <AdminPanel />;
+      case 'profile':
+        return <UserProfile />;
       default:
         return <ProductCatalog />;
     }
@@ -68,10 +71,10 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <CartIcon className="w-8 h-8 text-blue-600" />
+              <CartIcon className="w-8 h-8 text-orange-600" />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">E-Commerce Platform</h1>
-                <p className="text-xs text-gray-600">SRE Training Demo on OCI</p>
+                <h1 className="text-xl font-bold text-gray-900">भारतMart</h1>
+                <p className="text-xs text-gray-600">Your Trusted Indian Marketplace</p>
               </div>
             </div>
 
@@ -93,7 +96,7 @@ function App() {
                   onClick={() => setCurrentView(item.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                     currentView === item.id
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
@@ -116,12 +119,22 @@ function App() {
                 </button>
 
                 {user && (
-                  <button
-                    onClick={() => setCurrentView('admin')}
-                    className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <Shield className="w-5 h-5" />
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setCurrentView('profile')}
+                      className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                      title="My Profile"
+                    >
+                      <User className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setCurrentView('admin')}
+                      className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                      title="Admin Panel"
+                    >
+                      <Shield className="w-5 h-5" />
+                    </button>
+                  </>
                 )}
 
                 {loading ? (
@@ -145,7 +158,7 @@ function App() {
                 ) : (
                   <button
                     onClick={() => setAuthModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 rounded-lg transition-colors"
                   >
                     <LogIn className="w-5 h-5" />
                     <span className="font-medium">Sign In</span>
@@ -167,7 +180,7 @@ function App() {
                     }}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                       currentView === item.id
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >

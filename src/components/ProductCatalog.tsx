@@ -3,6 +3,7 @@ import { Search, Package, Filter, ShoppingCart, Plus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Product } from '../types/database';
 import { useCart } from '../contexts/CartContext';
+import { formatINR } from '../lib/currency';
 
 export function ProductCatalog() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -131,7 +132,7 @@ export function ProductCatalog() {
                   </span>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-900">${product.price}</div>
+                  <div className="text-2xl font-bold text-gray-900">{formatINR(product.price)}</div>
                 </div>
               </div>
 

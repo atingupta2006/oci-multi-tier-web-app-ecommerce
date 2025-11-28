@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Package, Clock, CheckCircle, XCircle, Truck, Search } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { formatINR } from '../../lib/currency';
 
 interface Order {
   id: string;
@@ -195,7 +196,7 @@ export function AdminOrders() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-gray-900">${order.total_amount.toFixed(2)}</p>
+                      <p className="font-bold text-gray-900">{formatINR(order.total_amount)}</p>
                       <p className="text-xs text-gray-500 mt-1">User: {order.user_id.slice(0, 8)}</p>
                     </div>
                   </div>
