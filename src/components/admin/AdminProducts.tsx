@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Search, DollarSign, Package } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { formatINR } from '../../lib/currency';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Product {
   id: string;

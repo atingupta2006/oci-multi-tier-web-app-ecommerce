@@ -30,7 +30,7 @@ function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [completedOrderId, setCompletedOrderId] = useState<string | undefined>();
-  const { user, signOut, loading } = useAuth();
+  const { user, userProfile, isAdmin, signOut, loading } = useAuth();
   const { totalItems } = useCart();
 
   const renderView = () => {
@@ -127,13 +127,16 @@ function App() {
                     >
                       <User className="w-5 h-5" />
                     </button>
-                    <button
-                      onClick={() => setCurrentView('admin')}
-                      className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                      title="Admin Panel"
-                    >
-                      <Shield className="w-5 h-5" />
-                    </button>
+                    {isAdmin && (
+                      <button
+                        onClick={() => setCurrentView('admin')}
+                        className="flex items-center gap-2 px-3 py-2 text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
+                        title="Admin Panel"
+                      >
+                        <Shield className="w-5 h-5" />
+                        <span className="text-xs font-medium">Admin</span>
+                      </button>
+                    )}
                   </>
                 )}
 
@@ -143,9 +146,14 @@ function App() {
                   <>
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg">
                       <User className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-700">
-                        {user.email}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-green-700">
+                          {userProfile?.full_name || user.email}
+                        </span>
+                        {isAdmin && (
+                          <span className="text-xs text-purple-600 font-medium">Admin</span>
+                        )}
+                      </div>
                     </div>
                     <button
                       onClick={() => signOut()}

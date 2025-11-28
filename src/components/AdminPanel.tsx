@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Shield, Package, ShoppingCart, Users, BarChart3, Settings } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { AdminProducts } from './admin/AdminProducts';
 import { AdminOrders } from './admin/AdminOrders';
-import { AdminUsers } from './admin/AdminUsers';
+import { UserManagement } from './admin/UserManagement';
 
 type AdminView = 'products' | 'orders' | 'users' | 'analytics';
 
@@ -20,7 +21,20 @@ const navItems: NavItem[] = [
 ];
 
 export function AdminPanel() {
+  const { isAdmin } = useAuth();
   const [currentView, setCurrentView] = useState<AdminView>('products');
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Shield className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+          <p className="text-gray-600">You need admin privileges to access this area.</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderView = () => {
     switch (currentView) {
@@ -29,7 +43,7 @@ export function AdminPanel() {
       case 'orders':
         return <AdminOrders />;
       case 'users':
-        return <AdminUsers />;
+        return <UserManagement />;
       case 'analytics':
         return (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
