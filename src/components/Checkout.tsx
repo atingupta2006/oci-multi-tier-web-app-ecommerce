@@ -48,6 +48,21 @@ export function Checkout({ onBack, onComplete }: CheckoutProps) {
           onConflict: 'id'
         });
 
+      const productIds = items.map(item => item.id);
+      const { data: validProducts, error: productCheckError } = await supabase
+        .from('products')
+        .select('id')
+        .in('id', productIds);
+
+      if (productCheckError) throw productCheckError;
+
+      const validProductIds = new Set(validProducts?.map(p => p.id) || []);
+      const invalidItems = items.filter(item => !validProductIds.has(item.id));
+
+      if (invalidItems.length > 0) {
+        throw new Error('Some items in your cart are no longer available. Please refresh the page and try again.');
+      }
+
       const shippingAddress = `${formData.fullName}, ${formData.address}, ${formData.city}, ${formData.zipCode}, Phone: ${formData.phone}`;
 
       const { data: order, error: orderError } = await supabase
