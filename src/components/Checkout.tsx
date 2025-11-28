@@ -3,6 +3,7 @@ import { CreditCard, MapPin, User, Mail, Phone, ArrowLeft, CheckCircle } from 'l
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { formatINR } from '../lib/currency';
+import { supabase } from '../lib/supabase';
 
 interface CheckoutProps {
   onBack: () => void;
@@ -35,51 +36,44 @@ export function Checkout({ onBack, onComplete }: CheckoutProps) {
         throw new Error('You must be signed in to place an order');
       }
 
+      const shippingAddress = `${formData.fullName}, ${formData.address}, ${formData.city}, ${formData.zipCode}, Phone: ${formData.phone}`;
+
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          status: 'pending',
+          total_amount: totalPrice,
+          shipping_address: shippingAddress,
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
       const orderItems = items.map((item) => ({
+        order_id: order.id,
         product_id: item.id,
         quantity: item.quantity,
         unit_price: item.price,
       }));
 
-      const response = await fetch('http://localhost:3000/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: user.id,
-          items: orderItems,
-          shipping_address: {
-            fullName: formData.fullName,
-            address: formData.address,
-            city: formData.city,
-            zipCode: formData.zipCode,
-            phone: formData.phone,
-          },
-        }),
-      });
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
 
-      if (!response.ok) {
-        throw new Error('Failed to create order');
-      }
+      if (itemsError) throw itemsError;
 
-      const order = await response.json();
-
-      const paymentResponse = await fetch('http://localhost:3000/api/payments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { error: paymentError } = await supabase
+        .from('payments')
+        .insert({
           order_id: order.id,
           amount: totalPrice,
+          status: 'completed',
           payment_method: formData.paymentMethod,
-        }),
-      });
+        });
 
-      if (!paymentResponse.ok) {
-        throw new Error('Payment processing failed');
-      }
+      if (paymentError) throw paymentError;
 
       clearCart();
       onComplete(order.id);
@@ -144,7 +138,7 @@ export function Checkout({ onBack, onComplete }: CheckoutProps) {
                       onChange={handleChange}
                       required
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="John Doe"
+                      placeholder="Amit Kumar"
                     />
                   </div>
                   <div>
@@ -158,7 +152,7 @@ export function Checkout({ onBack, onComplete }: CheckoutProps) {
                       onChange={handleChange}
                       required
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="john@example.com"
+                      placeholder="amit.kumar@example.in"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -195,7 +189,7 @@ export function Checkout({ onBack, onComplete }: CheckoutProps) {
                       onChange={handleChange}
                       required
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="123 Main Street"
+                      placeholder="A-101, Green Valley Apartments, Andheri"
                     />
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
