@@ -36,6 +36,18 @@ export function Checkout({ onBack, onComplete }: CheckoutProps) {
         throw new Error('You must be signed in to place an order');
       }
 
+      await supabase
+        .from('users')
+        .upsert({
+          id: user.id,
+          email: user.email,
+          full_name: formData.fullName,
+          phone: formData.phone,
+          address: `${formData.address}, ${formData.city}, ${formData.zipCode}`,
+        }, {
+          onConflict: 'id'
+        });
+
       const shippingAddress = `${formData.fullName}, ${formData.address}, ${formData.city}, ${formData.zipCode}, Phone: ${formData.phone}`;
 
       const { data: order, error: orderError } = await supabase
