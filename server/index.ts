@@ -62,6 +62,19 @@ app.get('/', (req, res) => {
 app.use(notFoundHandler);
 app.use(errorHandler);
 
+import { verifySupabaseBackendRole } from './startup/verifySupabaseRole';
+
+async function startServer() {
+  await verifySupabaseBackendRole();   // ⬅️ HARD GATE
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+  });
+}
+
+startServer();
+
+
 app.listen(PORT,  () => {
   logger.info('Server started', {
     port: PORT,

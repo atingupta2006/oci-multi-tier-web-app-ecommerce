@@ -25,6 +25,14 @@ if (!supabaseUrl || !serviceRoleKey) {
   process.exit(1);
 }
 
+// 🚨 Extra hard validation: ensure this is REALLY a service-role JWT
+if (!serviceRoleKey.startsWith('eyJhbGciOi')) {
+  console.error('❌ INVALID SUPABASE SERVICE ROLE KEY FORMAT');
+  console.error('Loaded key does not look like a JWT.');
+  console.error('You may be accidentally using ANON or a wrong secret.');
+  process.exit(1);
+}
+
 // ✅ Safe debug logging (no secrets leaked)
 console.log('Supabase Backend Config:');
 console.log('  ENV FILE:', envFile);
