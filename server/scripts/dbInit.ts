@@ -103,7 +103,6 @@ async function main() {
     console.log('🆕 Fresh database detected');
 
     await runSQL(BASE_SCHEMA_PATH, 'Base Schema');
-    await runSQL(SEED_PATH, 'Seed Data');
 
     console.log('✅ DB initialized');
   } else {

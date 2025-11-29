@@ -301,9 +301,31 @@ npm install
 # SUPABASE_SERVICE_ROLE_KEY=...
 # VITE_SUPABASE_URL=
 # VITE_SUPABASE_ANON_KEY=
+```
+
+- For first time setup only, run below commands in the database server
+```
+CREATE OR REPLACE FUNCTION public.exec_sql(sql text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  EXECUTE sql;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.exec_sql(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.exec_sql(text) FROM anon;
+REVOKE ALL ON FUNCTION public.exec_sql(text) FROM authenticated;
+GRANT EXECUTE ON FUNCTION public.exec_sql(text) TO service_role;
+```
+
 
 # 3. Start app
+```
 npm run db:reset
+npm run dev:server
 npm run dev  -- --host 0.0.0.0         # Terminal 1: Frontend (http://localhost:5173)
 npm run dev:server    # Terminal 2: Backend (http://localhost:3000)
 ```
