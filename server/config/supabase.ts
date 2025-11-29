@@ -7,8 +7,6 @@ const envFile =
   (process.env.NODE_ENV === 'development' ? 'dev.env' : '.env');
 
 dotenv.config({ path: envFile });
-Object.freeze(process.env);
-
 
 console.log('  process.env.ENV_FILE:', process.env.ENV_FILE);
 console.log('  process.env.NODE_ENV:', process.env.NODE_ENV);
