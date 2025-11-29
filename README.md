@@ -325,7 +325,6 @@ GRANT EXECUTE ON FUNCTION public.exec_sql(text) TO service_role;
 # 3. Start app
 ```
 npm run db:reset
-npm run dev:server
 npm run dev  -- --host 0.0.0.0         # Terminal 1: Frontend (http://localhost:5173)
 npm run dev:server    # Terminal 2: Backend (http://localhost:3000)
 ```

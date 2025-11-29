@@ -5,31 +5,45 @@ const router = Router();
 
 router.get('/health', async (req: Request, res: Response) => {
   try {
-    const { error } = await supabase
+    const result = await supabase
       .from('products')
-      .select('id', { head: true })
+      .select('id')
       .limit(1);
 
-    if (error) {
-      throw error;
+    console.log('🔍 HEALTH RAW RESULT:', JSON.stringify(result, null, 2));
+
+    if (result.error) {
+      throw result.error;
     }
 
-    res.status(200).json({
+    res.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      database: 'connected'
+      database: 'connected',
+      sample_product_id: result.data?.[0]?.id ?? null
     });
   } catch (err: any) {
-    console.error('HEALTH CHECK ERROR:', err);
+    console.error('❌ HEALTH CHECK HARD ERROR:', {
+      name: err?.name,
+      message: err?.message,
+      code: err?.code,
+      details: err?.details,
+      hint: err?.hint,
+      stack: err?.stack
+    });
 
     res.status(503).json({
       status: 'unhealthy',
-      timestamp: new Date().toISOString(),
       database: 'disconnected',
-      message: err?.message ?? 'Unknown error',
-      code: err?.code ?? null
-      // 🔐 Do NOT expose full error object in production
+      timestamp: new Date().toISOString(),
+      error: {
+        name: err?.name,
+        message: err?.message,
+        code: err?.code,
+        details: err?.details,
+        hint: err?.hint
+      }
     });
   }
 });
