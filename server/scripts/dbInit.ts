@@ -34,18 +34,24 @@ function requireFile(filePath: string) {
 async function runSQL(filePath: string, label: string) {
   requireFile(filePath);
 
-  const sqlRaw = fs.readFileSync(filePath, 'utf-8');
-  const sql = `BEGIN;\n${sqlRaw}\nCOMMIT;`;
+  const sql = fs.readFileSync(filePath, 'utf-8'); // 🔥 NO TRANSACTION WRAP
 
-  const { error } = await supabase.rpc('exec_sql', { sql });
+  console.log(`📄 ${label} SQL size:`, sql.length);
+
+  console.log(`🚀 Calling supabase.rpc('exec_sql') for: ${label} ...`);
+
+  const { data, error } = await supabase.rpc('exec_sql', { sql });
+
+  console.log(`📡 RPC response for ${label}:`, { data, error });
 
   if (error) {
-    console.error(`❌ ${label} failed:`, error);
+    console.error(`❌ ${label} failed HARD.`);
     exit(1);
   }
 
-  console.log(`✅ ${label} applied`);
+  console.log(`✅ ${label} applied SUCCESSFULLY`);
 }
+
 
 /* -------------------------------------------------- */
 /*  SERVICE-ROLE SAFE TABLE EXIST CHECK              */
