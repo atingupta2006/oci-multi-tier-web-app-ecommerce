@@ -54,10 +54,12 @@
 ### 🚀 Enterprise Features
 - **Auto-Scaling** - Scale from 2 to 50+ instances based on load
 - **Multi-Tier Architecture** - 6 independent, deployable layers
+- **Flexible Configuration** - Swap databases, queues, caches without code changes
+- **Multiple Deployment Modes** - Single VM, multi-tier, or Kubernetes
 - **Queue System** - Background job processing for orders, emails, payments
-- **Caching** - Redis for high-performance data access
+- **Caching** - Memory, Redis, or OCI Cache
 - **Monitoring** - Prometheus + Grafana for observability
-- **Security** - Row-level security, role-based access, encrypted passwords
+- **Security** - Row-level security, role-based access, OCI Vault integration
 
 ---
 
@@ -233,39 +235,49 @@ Choose the deployment method that fits your needs:
 
 ## ⚙️ Configuration
 
-Each layer has its own configuration file for easy deployment:
+BharatMart is **highly configurable** - choose your deployment mode and services based on your needs.
 
-### Frontend Configuration
-```bash
-# config/frontend.env.example
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-VITE_API_URL=https://api.yourdomain.com
-```
+### Simple Configuration (Default)
 
-### Backend Configuration
-```bash
-# config/backend.env.example
-# Connects to all other layers
-FRONTEND_URL=https://yourdomain.com              # Layer 1
-SUPABASE_URL=https://your-project.supabase.co    # Layer 3
-CACHE_REDIS_URL=redis://cache-host:6379          # Layer 4
-QUEUE_REDIS_URL=redis://queue-host:6379          # Layer 5
-```
+For local development, just set these:
 
-### Workers Configuration
 ```bash
-# config/workers.env.example
-WORKER_TYPE=order          # or: email, payment, all
-WORKER_CONCURRENCY=5       # Jobs processed simultaneously
-QUEUE_REDIS_URL=redis://queue-host:6379
+# .env
+DEPLOYMENT_MODE=single-vm
+DATABASE_TYPE=supabase
+WORKER_MODE=in-process
+CACHE_TYPE=memory
+
 SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
 ```
 
-**Key Concept:** Each layer connects to others via environment variables. This means you can:
-- Deploy layers on different machines
-- Swap services easily (e.g., switch from self-hosted Redis to OCI Cache)
-- Scale each layer independently
+That's it! Everything works out of the box.
+
+### Advanced Configuration
+
+Choose different services for each component:
+
+```bash
+# Deployment Mode
+DEPLOYMENT_MODE=single-vm | multi-tier | kubernetes
+
+# Database
+DATABASE_TYPE=supabase | postgresql | oci-autonomous | mysql
+
+# Background Processing
+WORKER_MODE=in-process | bull-queue | oci-queue | sqs | none
+
+# Cache
+CACHE_TYPE=memory | redis | oci-cache | memcached
+
+# Secrets Management
+SECRETS_PROVIDER=env | oci-vault | aws-secrets | azure-keyvault
+```
+
+**Mix and Match:** Use Supabase database with OCI Vault for secrets, or PostgreSQL with Bull queues - it's all configurable!
+
+See [📘 Configuration Guide →](CONFIGURATION_GUIDE.md) for detailed options and examples.
 
 ---
 
@@ -467,10 +479,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🆘 Support & Resources
 
 ### Documentation
-- [Deployment Architecture](DEPLOYMENT_ARCHITECTURE.md)
-- [Feature Guide](FEATURES.md)
-- [VM Scaling Guide](deployment/OCI_VM_AUTOSCALING.md)
-- [Kubernetes Guide](deployment/SCALING_GUIDE.md)
+- [Configuration Guide](CONFIGURATION_GUIDE.md) - ⭐ Flexible deployment options
+- [Architecture Flexibility](ARCHITECTURE_FLEXIBILITY.md) - How to swap services
+- [Workers Explained](server/workers/README.md) - Understanding background jobs
+- [Deployment Architecture](DEPLOYMENT_ARCHITECTURE.md) - System overview
+- [Feature Guide](FEATURES.md) - Complete feature list
+- [VM Scaling Guide](deployment/OCI_VM_AUTOSCALING.md) - VM auto-scaling
+- [Kubernetes Guide](deployment/SCALING_GUIDE.md) - Container orchestration
 
 ### Common Issues
 
