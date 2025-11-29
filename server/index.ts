@@ -11,7 +11,7 @@ import healthRoutes from './routes/health';
 import productsRoutes from './routes/products';
 import ordersRoutes from './routes/orders';
 import paymentsRoutes from './routes/payments';
-import queuesRoutes from './routes/queues';
+// import queuesRoutes from './routes/queues'; // Disabled - requires Redis
 
 dotenv.config();
 
@@ -39,7 +39,7 @@ app.use('/api', healthRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/payments', paymentsRoutes);
-app.use('/api/queues', queuesRoutes);
+// app.use('/api/queues', queuesRoutes); // Disabled - requires Redis
 
 app.get('/', (req, res) => {
   res.json({
