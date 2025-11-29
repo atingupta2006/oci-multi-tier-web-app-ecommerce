@@ -284,7 +284,14 @@ The project is pre-configured to use Supabase for database and authentication.
 ```bash
 # 1. Clone and install
 git clone <your-repo-url>
-cd bharatmart
+cd oci-multi-tier-web-app-ecommerce
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+node -v
+npm -v
+sudo npm install -g npm@latest
+npm -v
+
 npm install
 
 # 2. Configure Supabase (already in .env)
@@ -294,7 +301,8 @@ npm install
 # SUPABASE_SERVICE_ROLE_KEY=...
 
 # 3. Start app
-npm run dev           # Terminal 1: Frontend (http://localhost:5173)
+npm run db:reset
+npm run dev  -- --host 0.0.0.0         # Terminal 1: Frontend (http://localhost:5173)
 npm run dev:server    # Terminal 2: Backend (http://localhost:3000)
 ```
 

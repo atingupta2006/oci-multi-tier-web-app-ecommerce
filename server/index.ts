@@ -62,7 +62,7 @@ app.get('/', (req, res) => {
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+app.listen(PORT,  () => {
   logger.info('Server started', {
     port: PORT,
     environment: process.env.NODE_ENV || 'development',

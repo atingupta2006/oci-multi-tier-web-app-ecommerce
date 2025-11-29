@@ -5,21 +5,31 @@ const router = Router();
 
 router.get('/health', async (req: Request, res: Response) => {
   try {
-    const { error } = await supabase.from('products').select('id').limit(1);
+    const { error } = await supabase
+      .from('products')
+      .select('id', { head: true })
+      .limit(1);
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
 
-    res.json({
+    res.status(200).json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      database: 'connected',
+      database: 'connected'
     });
-  } catch (error) {
+  } catch (err: any) {
+    console.error('HEALTH CHECK ERROR:', err);
+
     res.status(503).json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
+      database: 'disconnected',
+      message: err?.message ?? 'Unknown error',
+      code: err?.code ?? null
+      // 🔐 Do NOT expose full error object in production
     });
   }
 });

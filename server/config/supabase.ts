@@ -1,19 +1,38 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
-dotenv.config();
+// ✅ Load env file based on environment
+const envFile =
+  process.env.ENV_FILE ||
+  (process.env.NODE_ENV === 'development' ? 'dev.env' : '.env');
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+dotenv.config({ path: envFile });
 
-console.log('Supabase Config Debug:');
-console.log('  URL:', supabaseUrl);
-console.log('  Key (first 30 chars):', supabaseServiceKey?.substring(0, 30));
-console.log('  Using SERVICE_ROLE_KEY:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-console.log('  Using ANON_KEY:', !!process.env.SUPABASE_ANON_KEY);
+// ✅ Strict backend-only configuration (NO fallbacks to anon or VITE)
+const supabaseUrl = process.env.SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables');
+// 🚨 Fail fast if misconfigured
+if (!supabaseUrl || !serviceRoleKey) {
+  console.error('❌ Supabase backend configuration error');
+  console.error('SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing');
+  process.exit(1);
 }
 
-export const supabase = createClient(supabaseUrl, supabaseServiceKey);
+// ✅ Safe debug logging (no secrets leaked)
+console.log('Supabase Backend Config:');
+console.log('  ENV FILE:', envFile);
+console.log('  URL:', supabaseUrl);
+console.log('  Using SERVICE_ROLE_KEY: true');
+
+// ✅ Backend client using SERVICE ROLE only
+export const supabase = createClient(
+  supabaseUrl,
+  serviceRoleKey,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
