@@ -6,10 +6,10 @@
   "scripts": {
     "dev": "vite",
 
-    "db:init": "tsx server/scripts/dbInit.ts",
-    "db:reset": "tsx server/scripts/dbInit.ts --reset",
+    "db:init": "NODE_ENV=development  ENV_FILE=dev.env  tsx server/scripts/dbInit.ts",
+    "db:reset": "NODE_ENV=development  ENV_FILE=dev.env  tsx server/scripts/dbInit.ts --reset",
 
-    "dev:server": "NODE_ENV=development npm run db:init && tsx watch server/index.ts",
+    "dev:server": "NODE_ENV=development  ENV_FILE=dev.env  npm run db:init && tsx watch server/index.ts",
     "dev:worker": "tsx watch server/workers/index.ts",
 
     "build": "vite build && tsc -p tsconfig.server.json",

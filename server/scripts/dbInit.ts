@@ -3,13 +3,10 @@ import path from 'path';
 import { supabase } from '../config/supabase';
 
 /* -------------------------------------------------- */
-/*  SAFE PROCESS ACCESS (NO TS NODE TYPES NEEDED)    */
+/*  SAFE PROCESS ACCESS                              */
 /* -------------------------------------------------- */
 
-const argv =
-  (globalThis as any)?.process?.argv ??
-  [];
-
+const argv = (globalThis as any)?.process?.argv ?? [];
 const exit = (code: number) =>
   (globalThis as any)?.process?.exit?.(code);
 
@@ -37,36 +34,40 @@ function requireFile(filePath: string) {
 async function runSQL(filePath: string, label: string) {
   requireFile(filePath);
 
-  const sql = fs.readFileSync(filePath, 'utf-8');
+  const sqlRaw = fs.readFileSync(filePath, 'utf-8');
+  const sql = `BEGIN;\n${sqlRaw}\nCOMMIT;`;
 
   const { error } = await supabase.rpc('exec_sql', { sql });
 
   if (error) {
     console.error(`❌ ${label} failed:`, error);
-    exit(1); // <-- FAILURE CODE
+    exit(1);
   }
 
   console.log(`✅ ${label} applied`);
 }
 
 /* -------------------------------------------------- */
-/*  PROPER TABLE EXISTENCE CHECK (NO RPC)            */
+/*  SERVICE-ROLE SAFE TABLE EXIST CHECK              */
 /* -------------------------------------------------- */
 
 async function tableExists() {
-  const { data, error } = await supabase
-    .from('information_schema.tables')
-    .select('table_name')
-    .eq('table_schema', 'public')
-    .eq('table_name', 'users')
-    .limit(1);
+  const { data, error } = await supabase.rpc('exec_sql', {
+    sql: `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'users'
+      );
+    `
+  });
 
   if (error) {
     console.error('❌ Failed to check table existence:', error);
     exit(1);
   }
 
-  return Array.isArray(data) && data.length > 0;
+  return data?.[0]?.exists === true;
 }
 
 /* -------------------------------------------------- */
@@ -74,8 +75,10 @@ async function tableExists() {
 /* -------------------------------------------------- */
 
 async function main() {
-  console.log('🔍 Database bootstrap starting...');
-  console.log('RESET MODE:', shouldReset);
+  console.log('--------------------------------------');
+  console.log(' DB INIT SCRIPT STARTED');
+  console.log(' RESET MODE:', shouldReset);
+  console.log('--------------------------------------');
 
   if (shouldReset) {
     console.log('🔥 RESETTING DATABASE...');

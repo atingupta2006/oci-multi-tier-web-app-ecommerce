@@ -295,10 +295,12 @@ npm -v
 npm install
 
 # 2. Configure Supabase (already in .env)
-# The .env file already has Supabase credentials configured
+# The dev.env file already has Supabase credentials configured
 # SUPABASE_URL=https://evksakwrmqcjmtazwxvb.supabase.co
 # SUPABASE_ANON_KEY=...
 # SUPABASE_SERVICE_ROLE_KEY=...
+# VITE_SUPABASE_URL=
+# VITE_SUPABASE_ANON_KEY=
 
 # 3. Start app
 npm run db:reset

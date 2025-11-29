@@ -8,6 +8,12 @@ const envFile =
 
 dotenv.config({ path: envFile });
 
+console.log('  process.env.ENV_FILE:', process.env.ENV_FILE);
+console.log('  process.env.NODE_ENV:', process.env.NODE_ENV);
+console.log('  ENV FILE:', envFile);
+
+console.log('  ENV FILE:', envFile);
+
 // ✅ Strict backend-only configuration (NO fallbacks to anon or VITE)
 const supabaseUrl = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
