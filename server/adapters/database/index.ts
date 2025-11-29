@@ -1,4 +1,5 @@
 import { deploymentConfig } from '../../config/deployment';
+import SQLiteAdapter from './sqlite';
 import { SupabaseAdapter } from './supabase';
 import { PostgreSQLAdapter } from './postgresql';
 import { OCIAutonomousAdapter } from './oci-autonomous';
@@ -31,6 +32,11 @@ export function createDatabaseAdapter(): IDatabaseAdapter {
   console.log(`📊 Initializing ${deploymentConfig.databaseType} database adapter...`);
 
   switch (deploymentConfig.databaseType) {
+    case 'sqlite':
+      return new SQLiteAdapter({
+        path: process.env.DATABASE_PATH || './bharatmart.db',
+        timeout: 5000,
+      }) as any;
     case 'supabase':
       return new SupabaseAdapter();
     case 'postgresql':
@@ -38,8 +44,11 @@ export function createDatabaseAdapter(): IDatabaseAdapter {
     case 'oci-autonomous':
       return new OCIAutonomousAdapter();
     default:
-      console.warn(`⚠️  Unknown database type: ${deploymentConfig.databaseType}, falling back to Supabase`);
-      return new SupabaseAdapter();
+      console.warn(`⚠️  Unknown database type: ${deploymentConfig.databaseType}, falling back to SQLite`);
+      return new SQLiteAdapter({
+        path: process.env.DATABASE_PATH || './bharatmart.db',
+        timeout: 5000,
+      }) as any;
   }
 }
 

@@ -6,6 +6,7 @@ import { metricsMiddleware } from './middleware/metricsMiddleware';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { register } from './config/metrics';
 import { logger } from './config/logger';
+import authRoutes from './routes/auth';
 import healthRoutes from './routes/health';
 import productsRoutes from './routes/products';
 import ordersRoutes from './routes/orders';
@@ -33,6 +34,7 @@ app.get('/metrics', async (req, res) => {
   res.end(await register.metrics());
 });
 
+app.use('/api/auth', authRoutes);
 app.use('/api', healthRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/orders', ordersRoutes);
@@ -41,10 +43,12 @@ app.use('/api/queues', queuesRoutes);
 
 app.get('/', (req, res) => {
   res.json({
-    name: 'SRE Training Platform API',
+    name: 'BharatMart API',
     version: '1.0.0',
     status: 'running',
+    database: process.env.DATABASE_TYPE || 'sqlite',
     endpoints: {
+      auth: '/api/auth',
       health: '/api/health',
       ready: '/api/health/ready',
       products: '/api/products',

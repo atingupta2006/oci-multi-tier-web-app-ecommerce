@@ -5,7 +5,7 @@ dotenv.config();
 export type DeploymentMode = 'single-vm' | 'multi-tier' | 'kubernetes';
 export type SecretsProvider = 'env' | 'oci-vault' | 'aws-secrets' | 'azure-keyvault';
 export type ConfigProvider = 'env' | 'oci-app-config' | 'aws-appconfig';
-export type DatabaseType = 'supabase' | 'postgresql' | 'oci-autonomous' | 'mysql';
+export type DatabaseType = 'sqlite' | 'supabase' | 'postgresql' | 'oci-autonomous' | 'mysql';
 export type WorkerMode = 'in-process' | 'bull-queue' | 'oci-queue' | 'sqs' | 'none';
 export type CacheType = 'memory' | 'redis' | 'oci-cache' | 'memcached';
 
@@ -22,7 +22,7 @@ export const deploymentConfig: DeploymentConfig = {
   mode: (process.env.DEPLOYMENT_MODE || 'single-vm') as DeploymentMode,
   secretsProvider: (process.env.SECRETS_PROVIDER || 'env') as SecretsProvider,
   configProvider: (process.env.CONFIG_PROVIDER || 'env') as ConfigProvider,
-  databaseType: (process.env.DATABASE_TYPE || 'supabase') as DatabaseType,
+  databaseType: (process.env.DATABASE_TYPE || 'sqlite') as DatabaseType,
   workerMode: (process.env.WORKER_MODE || 'in-process') as WorkerMode,
   cacheType: (process.env.CACHE_TYPE || 'memory') as CacheType,
 };
