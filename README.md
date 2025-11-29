@@ -479,13 +479,24 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🆘 Support & Resources
 
 ### Documentation
+
+**📚 Getting Started**
+- [Deployment Quickstart](DEPLOYMENT_QUICKSTART.md) - 🚀 Copy-paste deployment commands
+- [API Documentation](API.md) - 📡 Complete REST API reference
+- [Troubleshooting Guide](TROUBLESHOOTING.md) - 🔧 Common errors and fixes
+
+**⚙️ Configuration**
 - [Configuration Guide](CONFIGURATION_GUIDE.md) - ⭐ Flexible deployment options
 - [Architecture Flexibility](ARCHITECTURE_FLEXIBILITY.md) - How to swap services
 - [Workers Explained](server/workers/README.md) - Understanding background jobs
+
+**🚀 Deployment**
 - [Deployment Architecture](DEPLOYMENT_ARCHITECTURE.md) - System overview
-- [Feature Guide](FEATURES.md) - Complete feature list
 - [VM Scaling Guide](deployment/OCI_VM_AUTOSCALING.md) - VM auto-scaling
 - [Kubernetes Guide](deployment/SCALING_GUIDE.md) - Container orchestration
+
+**✨ Features**
+- [Feature Guide](FEATURES.md) - Complete feature list
 
 ### Common Issues
 
