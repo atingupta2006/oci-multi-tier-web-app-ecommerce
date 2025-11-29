@@ -16,8 +16,8 @@ const shouldReset = Array.isArray(argv) && argv.includes('--reset');
 /*  PATHS                                             */
 /* -------------------------------------------------- */
 
-const BASE_SCHEMA_PATH = path.resolve('supabase/migrations/00000000000000_base_schema.sql');
-const SEED_PATH = path.resolve('supabase/migrations/seed.sql');
+const BASE_SCHEMA_PATH = path.resolve('supabase/migrations/00000000000001_base_schema.sql');
+const SEED_PATH = path.resolve('supabase/migrations/00000000000002_seed.sql');
 const RESET_PATH = path.resolve('supabase/reset.sql');
 
 /* -------------------------------------------------- */
