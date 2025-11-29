@@ -2,9 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
 // ✅ Load env file based on environment
-const envFile =
-  process.env.ENV_FILE ||
-  (process.env.NODE_ENV === 'development' ? 'dev.env' : '.env');
+const envFile = '.env';
 
 dotenv.config({ path: envFile });
 
