@@ -293,6 +293,7 @@ sudo npm install -g npm@latest
 npm -v
 
 npm install
+cp prd.env .env
 
 # 2. Configure Supabase (already in .env)
 # The .env file already has Supabase credentials configured
