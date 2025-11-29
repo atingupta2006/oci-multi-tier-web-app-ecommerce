@@ -304,6 +304,7 @@ npm install
 ```
 
 - Run scripts in the file - supabase\migrations\00000000000000_destroy-db.sql
+- Run scripts in the file - supabase\migrations\00000000000001_exec_sql.sql
 
 
 # 3-1 Reset and Start Front End app
@@ -312,7 +313,7 @@ npm run db:reset
 npm run dev  -- --host 0.0.0.0         # Terminal 1: Frontend (http://localhost:5173)
 ```
 
-- Run scripts in the file - supabase\migrations\00000000000003_set_permissions.sql
+- Run scripts in the file - supabase\migrations\00000000000004_set_permissions.sql
 
 # 3-2 Start Backend End app
 ```
