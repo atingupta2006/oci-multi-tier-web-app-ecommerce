@@ -5,14 +5,15 @@
 [![React](https://img.shields.io/badge/React-18.3-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue.svg)](https://www.typescriptlang.org/)
 [![Express](https://img.shields.io/badge/Express-4.18-green.svg)](https://expressjs.com/)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-blue.svg)](https://supabase.com/)
+[![SQLite](https://img.shields.io/badge/SQLite-3-003B57.svg)](https://sqlite.org/)
+[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-green.svg)]()
 [![OCI](https://img.shields.io/badge/OCI-Ready-red.svg)](https://www.oracle.com/cloud/)
 
 ---
 
 ## 🚀 Quick Links
 
-**New Here?** → [5-Minute Local Setup](#-quick-start) | [Copy-Paste Deploy](DEPLOYMENT_QUICKSTART.md)
+**New Here?** → [1-Minute Local Setup](#-quick-start) | [Copy-Paste Deploy](DEPLOYMENT_QUICKSTART.md)
 
 **Deploying?** → [Configuration Guide](CONFIGURATION_GUIDE.md) | [Troubleshooting](TROUBLESHOOTING.md) | [API Docs](API.md)
 
@@ -63,13 +64,14 @@
 Change your entire infrastructure with just environment variables:
 
 ```bash
-# Development (Single VM, No Dependencies)
-DATABASE_TYPE=supabase
+# Development (Zero Dependencies - DEFAULT)
+DATABASE_TYPE=sqlite          # ← Local file database
+AUTH_PROVIDER=local           # ← Local JWT authentication
 WORKER_MODE=in-process
 CACHE_TYPE=memory
 
 # Production (Multi-Tier with Queues)
-DATABASE_TYPE=oci-autonomous
+DATABASE_TYPE=postgresql      # or supabase, oci-autonomous
 WORKER_MODE=bull-queue
 CACHE_TYPE=redis
 SECRETS_PROVIDER=oci-vault
@@ -79,12 +81,15 @@ SECRETS_PROVIDER=oci-vault
 
 ### 📦 Multiple Database Support
 
-- **Supabase** (default) - Managed PostgreSQL with free tier
+- **SQLite** (default) - Zero-setup file database, perfect for development
 - **PostgreSQL** - Self-hosted with full control
+- **Supabase** - Managed PostgreSQL with free tier
 - **OCI Autonomous** - Enterprise Oracle database
 - **MySQL** - Coming soon
 
 Switch with: `DATABASE_TYPE=postgresql`
+
+**Start local, upgrade when needed!**
 
 ### ⚡ Flexible Background Processing
 
@@ -145,7 +150,7 @@ See: [Deployment Quickstart](DEPLOYMENT_QUICKSTART.md)
 | **Caching** | Memory/Redis/OCI Cache with configurable TTL |
 | **Monitoring** | Prometheus metrics + Grafana dashboards |
 | **Secrets Management** | Environment vars, OCI Vault, AWS Secrets, Azure KeyVault |
-| **Multiple Databases** | Supabase, PostgreSQL, OCI Autonomous, MySQL |
+| **Multiple Databases** | SQLite, PostgreSQL, Supabase, OCI Autonomous, MySQL |
 | **Queue Systems** | In-process, Bull+Redis, OCI Queue, AWS SQS |
 | **Deployment Modes** | Single VM, Multi-tier, Kubernetes |
 
@@ -158,26 +163,27 @@ See: [Deployment Quickstart](DEPLOYMENT_QUICKSTART.md)
 React 18.3 + TypeScript 5.5 + Tailwind CSS 3.4 + Vite 5.4
 └── Icons: Lucide React
 └── State: React Context API
-└── Auth: Supabase Auth
+└── Auth: Local JWT / Supabase Auth (configurable)
 └── Build: 629KB optimized bundle
 ```
 
 ### Backend Layer
 ```
 Express.js 4.18 + Node.js 20+ + TypeScript
-├── Queue: Bull 4.16 with Redis
+├── Auth: JWT (jsonwebtoken 9.0) + bcrypt
+├── Queue: Bull 4.16 with Redis (optional)
 ├── Logging: Winston 3.11 (structured JSON logs)
 ├── Metrics: Prometheus Client 15.1
-└── Cache: Redis/Memory with configurable TTL
+└── Cache: Memory/Redis with configurable TTL
 ```
 
 ### Database Layer
 ```
-Primary: Supabase (PostgreSQL 15)
-├── Auth: Built-in with RLS
-├── Storage: Object storage for files
-├── Realtime: WebSocket subscriptions
-└── Alternative: PostgreSQL, OCI Autonomous, MySQL
+Default: SQLite 3 (better-sqlite3 9.2)
+├── Zero setup required
+├── File-based, perfect for development
+├── Auto-schema initialization
+└── Upgradeable: PostgreSQL, Supabase, OCI Autonomous, MySQL
 ```
 
 ### Infrastructure Layer
@@ -264,48 +270,76 @@ See: [Architecture Flexibility Guide](ARCHITECTURE_FLEXIBILITY.md)
 
 ## 🚀 Quick Start
 
-### ⚡ 5-Minute Local Setup
+### ⚡ 1-Minute Local Setup (Zero Dependencies!)
 
 **Prerequisites:** Node.js 18+, npm, Git
 
 ```bash
-# 1. Clone and install (2 min)
+# 1. Clone and install
 git clone <your-repo-url>
 cd bharatmart
 npm install
 
-# 2. Setup Supabase (2 min)
-# - Go to https://supabase.com
-# - Create project (takes ~2 min)
-# - Run SQL from supabase/migrations/ (copy-paste in SQL Editor)
-
-# 3. Configure environment (1 min)
-cp .env.example .env
-# Edit .env - add your Supabase URL and keys
-
-# 4. Start app
+# 2. Start app - Database auto-creates on first run!
 npm run dev           # Terminal 1: Frontend (http://localhost:5173)
 npm run dev:server    # Terminal 2: Backend (http://localhost:3000)
 ```
 
 **Done!** App running at http://localhost:5173 🎉
 
+**No Supabase account needed! No external services! Works offline!**
+
+The default configuration uses:
+- **SQLite** database (./bharatmart.db) - Auto-creates on first run
+- **Local JWT** authentication - Secure token-based auth
+- **In-process** workers - No Redis required
+- **Memory** cache - No external cache needed
+
 ### 👤 Create First Admin User
 
+**Option 1: Via API** (Recommended)
 ```bash
-# 1. Sign up at http://localhost:5173
-# 2. Run in Supabase SQL Editor:
+curl -X POST http://localhost:3000/api/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@example.com",
+    "password": "admin123",
+    "full_name": "Admin User"
+  }'
 
-UPDATE auth.users
-SET raw_app_meta_data = jsonb_set(
-  COALESCE(raw_app_meta_data, '{}'::jsonb),
-  '{role}',
-  '"admin"'
-)
-WHERE email = 'your-email@example.com';
-
-# 3. Logout and login - Admin panel now visible!
+# Then update role to admin:
+sqlite3 bharatmart.db "UPDATE users SET role = 'admin' WHERE email = 'admin@example.com'"
 ```
+
+**Option 2: Direct SQL**
+```bash
+sqlite3 bharatmart.db
+```
+```sql
+INSERT INTO users (id, email, password, role, full_name) VALUES (
+  lower(hex(randomblob(16))),
+  'admin@example.com',
+  '$2a$10$xxxxx',  -- Use bcrypt to hash your password
+  'admin',
+  'Admin User'
+);
+```
+
+### 🚀 Want to Use Supabase Instead?
+
+```bash
+# Copy Supabase config
+cp config/samples/single-vm-basic.env .env
+
+# Edit .env with your Supabase credentials
+# SUPABASE_URL=https://your-project.supabase.co
+# SUPABASE_ANON_KEY=...
+# DATABASE_TYPE=supabase
+
+# Restart servers
+```
+
+**See `config/samples/` for 13 ready-to-use configurations!**
 
 **Need Help?** → [Troubleshooting Guide](TROUBLESHOOTING.md)
 
@@ -379,23 +413,24 @@ WHERE email = 'your-email@example.com';
 
 ## ⚙️ Configuration
 
-### 🎯 Default (Zero Config)
+### 🎯 Default (Zero Config) - WORKS OUT OF THE BOX!
 
 ```bash
-# .env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-key
-
-VITE_SUPABASE_URL=${SUPABASE_URL}
-VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+# .env (already configured)
+DATABASE_TYPE=sqlite
+DATABASE_PATH=./bharatmart.db
+AUTH_PROVIDER=local
+JWT_SECRET=local-dev-secret-change-in-production
+WORKER_MODE=in-process
+CACHE_TYPE=memory
 ```
 
 That's it! Runs with:
-- Single VM mode
-- Supabase database
-- In-process workers
-- Memory cache
+- **SQLite** database (file-based, auto-creates)
+- **Local JWT** authentication
+- **In-process** workers
+- **Memory** cache
+- **Zero external dependencies!**
 
 ### 🎛️ Advanced (Mix & Match)
 
@@ -404,25 +439,30 @@ That's it! Runs with:
 DEPLOYMENT_MODE=single-vm | multi-tier | kubernetes
 
 # Database (pick one)
-DATABASE_TYPE=supabase              # ← Default, easiest
+DATABASE_TYPE=sqlite                # ← DEFAULT, zero setup
 DATABASE_TYPE=postgresql            # Self-hosted
+DATABASE_TYPE=supabase              # Managed PostgreSQL
 DATABASE_TYPE=oci-autonomous        # Enterprise Oracle
 DATABASE_TYPE=mysql                 # Coming soon
 
+# Authentication (pick one)
+AUTH_PROVIDER=local                 # ← DEFAULT, JWT tokens
+AUTH_PROVIDER=supabase              # Supabase Auth
+
 # Workers (pick one)
-WORKER_MODE=in-process              # ← Default, no deps
+WORKER_MODE=in-process              # ← DEFAULT, no deps
 WORKER_MODE=bull-queue              # Production (needs Redis)
 WORKER_MODE=oci-queue               # Serverless
 WORKER_MODE=sqs                     # AWS
 WORKER_MODE=none                    # Skip jobs
 
 # Cache (pick one)
-CACHE_TYPE=memory                   # ← Default
+CACHE_TYPE=memory                   # ← DEFAULT
 CACHE_TYPE=redis                    # Shared cache
 CACHE_TYPE=oci-cache                # Managed Redis
 
 # Secrets (pick one)
-SECRETS_PROVIDER=env                # ← Default, .env file
+SECRETS_PROVIDER=env                # ← DEFAULT, .env file
 SECRETS_PROVIDER=oci-vault          # Enterprise
 SECRETS_PROVIDER=aws-secrets        # AWS
 SECRETS_PROVIDER=azure-keyvault     # Azure
@@ -430,33 +470,47 @@ SECRETS_PROVIDER=azure-keyvault     # Azure
 
 ### 📖 Configuration Examples
 
-**Example 1: Local Development**
+**Example 1: Local Development (DEFAULT)**
 ```bash
-DEPLOYMENT_MODE=single-vm
-DATABASE_TYPE=supabase
+DATABASE_TYPE=sqlite
+AUTH_PROVIDER=local
 WORKER_MODE=in-process
 CACHE_TYPE=memory
+# Time: 1 min | Cost: $0 | No internet needed
 ```
 
 **Example 2: Production (Single VM)**
 ```bash
-DEPLOYMENT_MODE=single-vm
-DATABASE_TYPE=supabase
+DATABASE_TYPE=postgresql
+AUTH_PROVIDER=local
 WORKER_MODE=bull-queue
 CACHE_TYPE=redis
 QUEUE_REDIS_URL=redis://localhost:6379
+# Time: 30 min | Cost: $20-50/mo
 ```
 
-**Example 3: Full OCI Stack**
+**Example 3: Production (with Supabase)**
+```bash
+DATABASE_TYPE=supabase
+AUTH_PROVIDER=supabase
+WORKER_MODE=bull-queue
+CACHE_TYPE=redis
+SUPABASE_URL=https://your-project.supabase.co
+# Time: 1 hour | Cost: $50-100/mo
+```
+
+**Example 4: Full OCI Stack**
 ```bash
 DEPLOYMENT_MODE=multi-tier
 DATABASE_TYPE=oci-autonomous
 WORKER_MODE=oci-queue
 CACHE_TYPE=oci-cache
 SECRETS_PROVIDER=oci-vault
+# Time: 3-4 hours | Cost: $200-400/mo
 ```
 
 📘 **Complete Guide:** [Configuration Options](CONFIGURATION_GUIDE.md)
+📦 **Ready Configs:** See `config/samples/` for 13 copy-paste configurations
 
 ---
 

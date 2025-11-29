@@ -114,27 +114,39 @@ OCI_APP_CONFIG_ID=ocid1.appconfig.oc1...
 # ═══════════════════════════════════════════════════════════
 # DATABASE CONFIGURATION
 # ═══════════════════════════════════════════════════════════
-# Options: supabase | postgresql | oci-autonomous | mysql
-DATABASE_TYPE=supabase
+# Options: sqlite | postgresql | supabase | oci-autonomous | mysql
+DATABASE_TYPE=sqlite                # ← DEFAULT (zero setup)
+
+# SQLite (if DATABASE_TYPE=sqlite) - DEFAULT
+DATABASE_PATH=./bharatmart.db       # Auto-creates on first run
+
+# PostgreSQL (if DATABASE_TYPE=postgresql)
+DATABASE_URL=postgresql://localhost:5432/bharatmart
 
 # Supabase (if DATABASE_TYPE=supabase)
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-key
 
-# PostgreSQL (if DATABASE_TYPE=postgresql)
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_DB=bharatmart
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=password
-POSTGRES_SSL=true
-
 # OCI Autonomous Database (if DATABASE_TYPE=oci-autonomous)
 OCI_DB_CONNECTION_STRING=tcps://...
 OCI_DB_USER=admin
 OCI_DB_PASSWORD=password
 OCI_DB_WALLET_PATH=/path/to/wallet
+
+# ═══════════════════════════════════════════════════════════
+# AUTHENTICATION
+# ═══════════════════════════════════════════════════════════
+# Options: local | supabase
+AUTH_PROVIDER=local                 # ← DEFAULT (JWT tokens)
+
+# Local JWT Auth (if AUTH_PROVIDER=local) - DEFAULT
+JWT_SECRET=change-this-to-secure-random-string-min-32-chars
+JWT_EXPIRY=1h
+JWT_REFRESH_EXPIRY=7d
+
+# Supabase Auth (if AUTH_PROVIDER=supabase)
+# Uses SUPABASE_URL and SUPABASE_ANON_KEY from database config above
 
 # ═══════════════════════════════════════════════════════════
 # BACKGROUND PROCESSING
@@ -176,13 +188,68 @@ VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
 
 ## 🗄️ Database Options
 
-### Option 1: Supabase (Default - Easiest)
+### Option 1: SQLite (Default - Zero Setup!)
+
+**Pros:** Zero setup, file-based, works offline, perfect for dev, no dependencies
+**Cons:** Single writer, no built-in replication, limited to 100k requests/day
+
+```bash
+DATABASE_TYPE=sqlite
+DATABASE_PATH=./bharatmart.db    # Auto-creates on first run
+AUTH_PROVIDER=local              # Uses local JWT authentication
+JWT_SECRET=your-secret-key
+```
+
+**Setup:**
+```bash
+# That's it! Database auto-creates when server starts
+npm run dev:server
+
+# View/manage database:
+sqlite3 bharatmart.db
+.tables
+SELECT * FROM users;
+```
+
+**When to upgrade:**
+- More than 100k requests/day → PostgreSQL
+- Need replication → PostgreSQL or Supabase
+- Need real-time subscriptions → Supabase
+
+### Option 2: Self-Hosted PostgreSQL
+
+**Pros:** High concurrency, full control, data sovereignty, customizable
+**Cons:** You manage backups, scaling, updates
+
+```bash
+DATABASE_TYPE=postgresql
+DATABASE_URL=postgresql://localhost:5432/bharatmart
+AUTH_PROVIDER=local              # Or supabase for Supabase Auth
+JWT_SECRET=your-secret-key
+```
+
+**Setup:**
+```bash
+# Install PostgreSQL
+sudo apt install postgresql-14
+
+# Create database
+sudo -u postgres psql
+CREATE DATABASE bharatmart;
+CREATE USER bharatmart WITH PASSWORD 'your-password';
+GRANT ALL PRIVILEGES ON DATABASE bharatmart TO bharatmart;
+
+# Schema will auto-create on first run (or use migrations)
+```
+
+### Option 3: Supabase (Easiest Cloud Option)
 
 **Pros:** Free tier, auto-scaling, built-in auth, real-time subscriptions
-**Cons:** Third-party service, limited customization
+**Cons:** Third-party service, requires internet
 
 ```bash
 DATABASE_TYPE=supabase
+AUTH_PROVIDER=supabase           # Use Supabase's built-in auth
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
@@ -194,7 +261,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...
 3. Run migrations from `supabase/migrations/`
 4. Copy credentials to `.env`
 
-### Option 2: Self-Hosted PostgreSQL
+### Option 4: OCI Autonomous Database
 
 **Pros:** Full control, data sovereignty, customizable
 **Cons:** You manage backups, scaling, updates
@@ -451,16 +518,67 @@ AZURE_KEYVAULT_URL=https://bharatmart.vault.azure.net/
 
 ## 🎬 Quick Start Configurations
 
-### Configuration 1: Local Development (Fastest)
+### Configuration 1: Local Development - DEFAULT (Zero Setup!)
 
-**Time:** 5 minutes | **Cost:** Free
+**Time:** 1 minute | **Cost:** $0 | **No internet required!**
 
 ```bash
-# .env.local
+# .env (DEFAULT - Already configured!)
 DEPLOYMENT_MODE=single-vm
-SECRETS_PROVIDER=env
-CONFIG_PROVIDER=env
+DATABASE_TYPE=sqlite             # ← Auto-creates on first run
+DATABASE_PATH=./bharatmart.db
+AUTH_PROVIDER=local              # ← Local JWT authentication
+JWT_SECRET=local-dev-secret-change-in-production
+WORKER_MODE=in-process
+CACHE_TYPE=memory
+```
+
+**Run:**
+```bash
+npm install
+npm run dev        # Frontend
+npm run dev:server # Backend (database auto-creates!)
+```
+
+**That's it! No Supabase, no Redis, no external services!**
+
+### Configuration 2: Local Development with PostgreSQL
+
+**Time:** 10 minutes | **Cost:** $0
+
+```bash
+# .env.local-postgres
+DEPLOYMENT_MODE=single-vm
+DATABASE_TYPE=postgresql
+DATABASE_URL=postgresql://localhost:5432/bharatmart
+AUTH_PROVIDER=local
+JWT_SECRET=your-secret-key
+WORKER_MODE=in-process
+CACHE_TYPE=memory
+```
+
+**Setup:**
+```bash
+# Install PostgreSQL
+sudo apt install postgresql
+createdb bharatmart
+
+# Run
+npm run dev:server  # Schema auto-creates
+```
+
+### Configuration 3: Production with Supabase
+
+**Time:** 1 hour | **Cost:** $0-50/month
+
+```bash
+# Copy ready-made config
+cp config/samples/single-vm-basic.env .env
+
+# Or manually configure:
+DEPLOYMENT_MODE=single-vm
 DATABASE_TYPE=supabase
+AUTH_PROVIDER=supabase
 WORKER_MODE=in-process
 CACHE_TYPE=memory
 
@@ -469,28 +587,22 @@ SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-key
 ```
 
-**Run:**
-```bash
-npm run dev        # Frontend
-npm run dev:server # Backend (workers run in-process)
-```
+### Configuration 4: Production with Redis Workers
 
-### Configuration 2: Single VM Production
-
-**Time:** 30 minutes | **Cost:** $10-50/month
+**Time:** 30 minutes | **Cost:** $20-50/month
 
 ```bash
-# .env.production-single-vm
+# Copy ready-made config
+cp config/samples/single-vm-production.env .env
+
+# Or manually configure:
 DEPLOYMENT_MODE=single-vm
-SECRETS_PROVIDER=env
-CONFIG_PROVIDER=env
-DATABASE_TYPE=supabase
+DATABASE_TYPE=postgresql         # or sqlite
+DATABASE_URL=postgresql://localhost:5432/bharatmart
+AUTH_PROVIDER=local
+JWT_SECRET=your-production-secret-64-chars-minimum
 WORKER_MODE=bull-queue
 CACHE_TYPE=redis
-
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-key
 QUEUE_REDIS_URL=redis://localhost:6379
 CACHE_REDIS_URL=redis://localhost:6379
 ```
@@ -500,14 +612,13 @@ CACHE_REDIS_URL=redis://localhost:6379
 # On VM:
 git clone repo
 npm install
-sudo apt install redis-server nginx
+sudo apt install redis-server postgresql nginx
 npm run build
-pm2 start server/index.js
-pm2 start server/workers/index.js
-sudo systemctl start nginx
+pm2 start dist/server/index.js
+pm2 start dist/server/workers/index.js
 ```
 
-### Configuration 3: Multi-Tier with OCI Services
+### Configuration 5: Multi-Tier with OCI Services
 
 **Time:** 2-3 hours | **Cost:** $150-300/month
 
