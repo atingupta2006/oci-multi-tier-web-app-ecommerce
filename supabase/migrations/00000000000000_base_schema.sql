@@ -145,21 +145,31 @@ ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inventory_logs ENABLE ROW LEVEL SECURITY;
 
--- ---------- DEV-SAFE SERVICE ROLE OVERRIDE ----------
+-- ---------- DEV-SAFE SERVICE ROLE OVERRIDE (PG14 SAFE) ----------
 DO $$
 DECLARE
   r RECORD;
+  policy_count INTEGER;
 BEGIN
   FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
   LOOP
-    EXECUTE format(
-      'CREATE POLICY IF NOT EXISTS service_role_all_%I
-       ON public.%I
-       FOR ALL
-       TO service_role
-       USING (true)
-       WITH CHECK (true);',
-      r.tablename, r.tablename
-    );
+    SELECT COUNT(*) INTO policy_count
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = r.tablename
+      AND policyname = 'service_role_all_' || r.tablename;
+
+    IF policy_count = 0 THEN
+      EXECUTE format(
+        'CREATE POLICY service_role_all_%I
+         ON public.%I
+         FOR ALL
+         TO service_role
+         USING (true)
+         WITH CHECK (true);',
+        r.tablename, r.tablename
+      );
+    END IF;
   END LOOP;
 END $$;
+
