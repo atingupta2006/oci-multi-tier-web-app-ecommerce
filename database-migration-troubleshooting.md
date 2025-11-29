@@ -43,7 +43,6 @@ CASCADE;
 
 -- Drop helper functions
 DROP FUNCTION IF EXISTS public.exec_sql(text) CASCADE;
-DROP FUNCTION IF EXISTS public.debug_current_role() CASCADE;
 
 -- Drop triggers & helper functions
 DROP FUNCTION IF EXISTS public.set_updated_at() CASCADE;

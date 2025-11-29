@@ -68,8 +68,6 @@ END $$;
 -- ============================================================
 
 DROP FUNCTION IF EXISTS public.exec_sql(text);
-DROP FUNCTION IF EXISTS public.debug_current_role();
-
 
 -- ============================================================
 -- 5. FINAL SAFETY CHECK (SHOULD RETURN 0 ROWS)

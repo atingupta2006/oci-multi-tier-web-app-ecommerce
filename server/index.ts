@@ -13,7 +13,6 @@ import healthRoutes from './routes/health';
 import productsRoutes from './routes/products';
 import ordersRoutes from './routes/orders';
 import paymentsRoutes from './routes/payments';
-import { verifySupabaseBackendRole } from './startup/verifySupabaseRole.ts';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -62,8 +61,6 @@ app.use(errorHandler);
 
 // ✅ SINGLE, SECURE, GUARDED SERVER START
 async function startServer() {
-  await verifySupabaseBackendRole();   // ⬅️ HARD GATE
-
   const server = app.listen(PORT, () => {
     logger.info('Server started', {
       port: PORT,

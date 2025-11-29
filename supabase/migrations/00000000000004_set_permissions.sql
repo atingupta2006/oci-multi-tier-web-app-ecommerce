@@ -15,32 +15,6 @@ $$;
 REVOKE ALL ON FUNCTION public.exec_sql(text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.exec_sql(text) TO service_role;
 
-
-DROP FUNCTION IF EXISTS public.debug_current_role();
-
-CREATE OR REPLACE FUNCTION public.debug_current_role()
-RETURNS TABLE (
-  db_user text,
-  db_session_user text,
-  jwt_role text,
-  jwt_sub text,
-  db_search_path text
-)
-LANGUAGE sql
-SECURITY DEFINER
-AS $$
-  SELECT
-    current_user::text,
-    session_user::text,
-    current_setting('request.jwt.claim.role', true),
-    current_setting('request.jwt.claim.sub', true),
-    current_setting('search_path', true);
-$$;
-
-REVOKE ALL ON FUNCTION public.debug_current_role() FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.debug_current_role() TO service_role;
-
-
 -- =====================================================
 -- 2. PRODUCTS: PUBLIC READ
 -- =====================================================
