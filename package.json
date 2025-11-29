@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "NODE_ENV=development  ENV_FILE=dev.env vite",
 
     "db:init": "NODE_ENV=development  ENV_FILE=dev.env  tsx server/scripts/dbInit.ts",
     "db:reset": "NODE_ENV=development  ENV_FILE=dev.env  tsx server/scripts/dbInit.ts --reset",
