@@ -26,10 +26,10 @@ if (process.env.NODE_ENV === "production" && shouldReset) {
 /* -------------------------------------------------- */
 
 const BASE_SCHEMA_PATH = path.resolve(
-  "supabase/migrations/00000000000001_base_schema.sql"
+  "supabase/migrations/00000000000002_base_schema.sql"
 );
 const SEED_PATH = path.resolve(
-  "supabase/migrations/00000000000002_seed.sql"
+  "supabase/migrations/00000000000003_seed.sql"
 );
 const RESET_PATH = path.resolve("supabase/reset.sql");
 
@@ -45,61 +45,7 @@ function requireFile(filePath: string) {
 }
 
 /* -------------------------------------------------- */
-/*  ✅ SELF-HEALING exec_sql BOOTSTRAP                */
-/* -------------------------------------------------- */
-
-async function ensureExecSql() {
-  const sql = `
-    CREATE OR REPLACE FUNCTION public.exec_sql(sql text)
-    RETURNS void
-    LANGUAGE plpgsql
-    SECURITY DEFINER
-    AS $$
-    BEGIN
-      EXECUTE sql;
-    END;
-    $$;
-
-    REVOKE ALL ON FUNCTION public.exec_sql(text)
-      FROM PUBLIC, anon, authenticated;
-
-    GRANT EXECUTE ON FUNCTION public.exec_sql(text)
-      TO service_role;
-  `;
-
-  console.log("🛠️ Ensuring exec_sql exists (raw SQL bootstrap)...");
-
-  // ✅ DIRECT PostgREST call (does NOT require exec_sql to exist)
-  const res = await fetch(
-    `${process.env.SUPABASE_URL}/rest/v1/rpc/_` , // dummy endpoint to force SQL
-    {
-      method: "POST",
-      headers: {
-        apiKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ sql }),
-    }
-  );
-
-  // Some Supabase versions reject the dummy RPC route but still execute SQL.
-  // So we now VERIFY using real rpc.
-  const verify = await supabase.rpc("exec_sql", {
-    sql: "SELECT 1;"
-  });
-
-  if (verify.error) {
-    console.error("❌ Failed to bootstrap exec_sql:", verify.error);
-    exit(1);
-  }
-
-  console.log("✅ exec_sql is ready");
-}
-
-
-/* -------------------------------------------------- */
-/*  ✅ SAFE SQL RUNNER (NO TRANSACTION WRAP)          */
+/*  ✅ SAFE SQL RUNNER                                */
 /* -------------------------------------------------- */
 
 async function runSQL(filePath: string, label: string) {
@@ -218,8 +164,6 @@ async function ensureAdminUser() {
   }
 
   if (existingProfile) {
-    console.log("🔁 Updating existing admin profile UID...");
-
     const { error: updateError } =
       await supabase
         .from("users")
@@ -231,8 +175,6 @@ async function ensureAdminUser() {
       exit(1);
     }
   } else {
-    console.log("🆕 Inserting admin into public.users...");
-
     const { error: insertError } =
       await supabase.from("users").insert({
         id: authUserId,
@@ -259,9 +201,6 @@ async function main() {
   console.log(" DB INIT SCRIPT STARTED");
   console.log(" RESET MODE:", shouldReset);
   console.log("--------------------------------------");
-
-  // ✅ Always self-heal exec_sql before anything else
-  await ensureExecSql();
 
   if (shouldReset) {
     console.log("🔥 RESETTING DATABASE...");
@@ -290,10 +229,6 @@ async function main() {
 
   exit(0);
 }
-
-/* -------------------------------------------------- */
-/*  FATAL ERROR HANDLER                              */
-/* -------------------------------------------------- */
 
 main().catch((err) => {
   console.error("❌ DB INIT FAILED:", err);
