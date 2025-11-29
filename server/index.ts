@@ -14,6 +14,7 @@ import productsRoutes from './routes/products';
 import ordersRoutes from './routes/orders';
 import paymentsRoutes from './routes/payments';
 // import queuesRoutes from './routes/queues'; // Disabled - requires Redis
+import { verifySupabaseBackendRole } from './startup/verifySupabaseRole.ts';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -62,7 +63,6 @@ app.get('/', (req, res) => {
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-import { verifySupabaseBackendRole } from './startup/verifySupabaseRole';
 
 async function startServer() {
   await verifySupabaseBackendRole();   // ⬅️ HARD GATE
