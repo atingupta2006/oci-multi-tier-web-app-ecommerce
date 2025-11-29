@@ -1,6 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { logApiEvent } from './middleware/logger';
 import { metricsMiddleware } from './middleware/metricsMiddleware';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
@@ -12,8 +14,6 @@ import productsRoutes from './routes/products';
 import ordersRoutes from './routes/orders';
 import paymentsRoutes from './routes/payments';
 // import queuesRoutes from './routes/queues'; // Disabled - requires Redis
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;

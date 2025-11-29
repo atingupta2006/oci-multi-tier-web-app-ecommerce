@@ -5,8 +5,7 @@
 [![React](https://img.shields.io/badge/React-18.3-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue.svg)](https://www.typescriptlang.org/)
 [![Express](https://img.shields.io/badge/Express-4.18-green.svg)](https://expressjs.com/)
-[![SQLite](https://img.shields.io/badge/SQLite-3-003B57.svg)](https://sqlite.org/)
-[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-green.svg)]()
+[![Supabase](https://img.shields.io/badge/Supabase-Powered-3ECF8E.svg)](https://supabase.com/)
 [![OCI](https://img.shields.io/badge/OCI-Ready-red.svg)](https://www.oracle.com/cloud/)
 
 ---
@@ -64,9 +63,15 @@
 Change your entire infrastructure with just environment variables:
 
 ```bash
-# Development (Zero Dependencies - DEFAULT)
-DATABASE_TYPE=sqlite          # ← Local file database
-AUTH_PROVIDER=local           # ← Local JWT authentication
+# Development (DEFAULT - uses Supabase)
+DATABASE_TYPE=supabase        # ← Supabase database
+AUTH_PROVIDER=supabase        # ← Supabase authentication
+WORKER_MODE=none              # ← No workers needed for simple deployments
+CACHE_TYPE=none               # ← No cache needed for simple deployments
+
+# Alternative: Local SQLite (for offline development)
+DATABASE_TYPE=sqlite
+AUTH_PROVIDER=local
 WORKER_MODE=in-process
 CACHE_TYPE=memory
 
@@ -270,9 +275,11 @@ See: [Architecture Flexibility Guide](ARCHITECTURE_FLEXIBILITY.md)
 
 ## 🚀 Quick Start
 
-### ⚡ 1-Minute Local Setup (Zero Dependencies!)
+### ⚡ Quick Setup with Supabase (DEFAULT)
 
-**Prerequisites:** Node.js 18+, npm, Git
+**Prerequisites:** Node.js 18+, npm, Git, Supabase account
+
+The project is pre-configured to use Supabase for database and authentication.
 
 ```bash
 # 1. Clone and install
@@ -280,63 +287,76 @@ git clone <your-repo-url>
 cd bharatmart
 npm install
 
-# 2. Start app - Database auto-creates on first run!
+# 2. Configure Supabase (already in .env)
+# The .env file already has Supabase credentials configured
+# SUPABASE_URL=https://evksakwrmqcjmtazwxvb.supabase.co
+# SUPABASE_ANON_KEY=...
+# SUPABASE_SERVICE_ROLE_KEY=...
+
+# 3. Start app
 npm run dev           # Terminal 1: Frontend (http://localhost:5173)
 npm run dev:server    # Terminal 2: Backend (http://localhost:3000)
 ```
 
 **Done!** App running at http://localhost:5173 🎉
 
-**No Supabase account needed! No external services! Works offline!**
+**Default Configuration:**
+- **Supabase** database - PostgreSQL with Row Level Security
+- **Supabase Auth** - Built-in authentication with email/password
+- **No workers** - WORKER_MODE=none (no Redis required)
+- **No cache** - CACHE_TYPE=none (no Redis required)
 
-The default configuration uses:
-- **SQLite** database (./bharatmart.db) - Auto-creates on first run
-- **Local JWT** authentication - Secure token-based auth
-- **In-process** workers - No Redis required
-- **Memory** cache - No external cache needed
+### 🔄 Alternative: Local SQLite Setup (Offline)
 
-### 👤 Create First Admin User
+Want to run without external services?
 
-**Option 1: Via API** (Recommended)
 ```bash
-curl -X POST http://localhost:3000/api/auth/signup \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "admin@example.com",
-    "password": "admin123",
-    "full_name": "Admin User"
-  }'
+# Edit .env
+DATABASE_TYPE=sqlite
+AUTH_PROVIDER=local
+WORKER_MODE=in-process
+CACHE_TYPE=memory
 
-# Then update role to admin:
-sqlite3 bharatmart.db "UPDATE users SET role = 'admin' WHERE email = 'admin@example.com'"
+# Restart servers - SQLite database auto-creates on first run!
 ```
 
-**Option 2: Direct SQL**
-```bash
-sqlite3 bharatmart.db
+### 👤 Login with Test Users
+
+The Supabase database already has test users pre-loaded:
+
+**Admin Account:**
 ```
+Email: admin@bharatmart.com
+Password: admin123
+```
+
+**Customer Accounts:**
+```
+Email: rajesh@example.com
+Password: customer123
+
+Email: priya@example.com
+Password: customer123
+```
+
+### 🔐 Create New Users
+
+**Via Frontend:** Click "Sign In" → "Create Account" tab
+
+**Via Supabase Dashboard:**
+1. Go to Authentication → Users → Add User
+2. After creating auth user, add profile to `users` table
+
+**Via SQL:**
 ```sql
-INSERT INTO users (id, email, password, role, full_name) VALUES (
-  lower(hex(randomblob(16))),
-  'admin@example.com',
-  '$2a$10$xxxxx',  -- Use bcrypt to hash your password
-  'admin',
-  'Admin User'
+-- Users are automatically created in auth.users by Supabase
+-- Then add profile to public.users table
+INSERT INTO users (id, email, full_name, role) VALUES (
+  '<auth-user-id>',
+  'newuser@example.com',
+  'New User',
+  'customer'  -- or 'admin'
 );
-```
-
-### 🚀 Want to Use Supabase Instead?
-
-```bash
-# Copy Supabase config
-cp config/samples/single-vm-basic.env .env
-
-# Edit .env with your Supabase credentials
-# SUPABASE_URL=https://your-project.supabase.co
-# SUPABASE_ANON_KEY=...
-# DATABASE_TYPE=supabase
-
-# Restart servers
 ```
 
 **See `config/samples/` for 13 ready-to-use configurations!**

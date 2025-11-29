@@ -1,32 +1,38 @@
 import { Job } from 'bull';
-import { emailQueue, EmailNotificationJob } from '../config/queue';
+import { getEmailQueue, EmailNotificationJob } from '../config/queue';
 import { logger } from '../config/logger';
 
-emailQueue.process(async (job: Job<EmailNotificationJob>) => {
-  const { to, subject, body, type, orderId } = job.data;
+const emailQueue = getEmailQueue();
 
-  logger.info(`Sending ${type} email for order ${orderId} to ${to}`);
+if (emailQueue) {
+  emailQueue.process(async (job: Job<EmailNotificationJob>) => {
+    const { to, subject, body, type, orderId } = job.data;
 
-  try {
-    await job.progress(20);
+    logger.info(`Sending ${type} email for order ${orderId} to ${to}`);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      await job.progress(20);
 
-    await job.progress(60);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    logger.info(`Email sent successfully: ${type} for order ${orderId}`);
+      await job.progress(60);
 
-    await job.progress(100);
+      logger.info(`Email sent successfully: ${type} for order ${orderId}`);
 
-    return {
-      success: true,
-      emailType: type,
-      sentAt: new Date().toISOString(),
-    };
-  } catch (error) {
-    logger.error(`Failed to send email for order ${orderId}:`, error);
-    throw error;
-  }
-});
+      await job.progress(100);
 
-logger.info('Email worker started');
+      return {
+        success: true,
+        emailType: type,
+        sentAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      logger.error(`Failed to send email for order ${orderId}:`, error);
+      throw error;
+    }
+  });
+
+  logger.info('Email worker started');
+} else {
+  logger.info('Email worker not started (WORKER_MODE is not bull-queue)');
+}

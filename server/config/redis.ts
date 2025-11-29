@@ -2,33 +2,49 @@ import Redis from 'ioredis';
 import { logger } from './logger';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+const CACHE_TYPE = process.env.CACHE_TYPE || 'none';
 
-export const redis = new Redis(REDIS_URL, {
-  maxRetriesPerRequest: 3,
-  retryStrategy(times) {
-    const delay = Math.min(times * 50, 2000);
-    return delay;
-  },
-  reconnectOnError(err) {
-    logger.error('Redis connection error:', err);
-    return true;
-  },
-});
+let redis: Redis | null = null;
 
-redis.on('connect', () => {
-  logger.info('Redis connected successfully');
-});
+function initializeRedis() {
+  if (CACHE_TYPE !== 'redis') {
+    return;
+  }
 
-redis.on('error', (err) => {
-  logger.error('Redis error:', err);
-});
+  if (redis) return;
 
-redis.on('ready', () => {
-  logger.info('Redis is ready');
-});
+  redis = new Redis(REDIS_URL, {
+    maxRetriesPerRequest: 3,
+    retryStrategy(times) {
+      const delay = Math.min(times * 50, 2000);
+      return delay;
+    },
+    reconnectOnError(err) {
+      logger.error('Redis connection error:', err);
+      return true;
+    },
+  });
+
+  redis.on('connect', () => {
+    logger.info('Redis connected successfully');
+  });
+
+  redis.on('error', (err) => {
+    logger.error('Redis error:', err);
+  });
+
+  redis.on('ready', () => {
+    logger.info('Redis is ready');
+  });
+}
 
 export const cacheService = {
   async get<T>(key: string): Promise<T | null> {
+    initializeRedis();
+    if (!redis) {
+      logger.warn('Redis not initialized (CACHE_TYPE is not redis)');
+      return null;
+    }
     try {
       const data = await redis.get(key);
       if (!data) return null;
@@ -40,6 +56,11 @@ export const cacheService = {
   },
 
   async set(key: string, value: any, ttlSeconds: number = 300): Promise<boolean> {
+    initializeRedis();
+    if (!redis) {
+      logger.warn('Redis not initialized (CACHE_TYPE is not redis)');
+      return false;
+    }
     try {
       await redis.setex(key, ttlSeconds, JSON.stringify(value));
       return true;
@@ -50,6 +71,11 @@ export const cacheService = {
   },
 
   async del(key: string): Promise<boolean> {
+    initializeRedis();
+    if (!redis) {
+      logger.warn('Redis not initialized (CACHE_TYPE is not redis)');
+      return false;
+    }
     try {
       await redis.del(key);
       return true;
@@ -60,6 +86,11 @@ export const cacheService = {
   },
 
   async invalidatePattern(pattern: string): Promise<number> {
+    initializeRedis();
+    if (!redis) {
+      logger.warn('Redis not initialized (CACHE_TYPE is not redis)');
+      return 0;
+    }
     try {
       const keys = await redis.keys(pattern);
       if (keys.length > 0) {
@@ -73,6 +104,11 @@ export const cacheService = {
   },
 
   async exists(key: string): Promise<boolean> {
+    initializeRedis();
+    if (!redis) {
+      logger.warn('Redis not initialized (CACHE_TYPE is not redis)');
+      return false;
+    }
     try {
       const result = await redis.exists(key);
       return result === 1;
@@ -82,3 +118,8 @@ export const cacheService = {
     }
   },
 };
+
+export function getRedisClient(): Redis | null {
+  initializeRedis();
+  return redis;
+}
