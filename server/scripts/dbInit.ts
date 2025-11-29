@@ -1,6 +1,6 @@
-import fs from 'fs';
-import path from 'path';
-import { supabase } from '../config/supabase';
+import fs from "fs";
+import path from "path";
+import { supabase } from "../config/supabase";
 
 /* -------------------------------------------------- */
 /*  SAFE PROCESS ACCESS                              */
@@ -10,15 +10,28 @@ const argv = (globalThis as any)?.process?.argv ?? [];
 const exit = (code: number) =>
   (globalThis as any)?.process?.exit?.(code);
 
-const shouldReset = Array.isArray(argv) && argv.includes('--reset');
+const shouldReset = Array.isArray(argv) && argv.includes("--reset");
+
+/* -------------------------------------------------- */
+/*  🚨 HARD SAFETY: NEVER ALLOW RESET IN PROD         */
+/* -------------------------------------------------- */
+
+if (process.env.NODE_ENV === "production" && shouldReset) {
+  console.error("❌ RESET is BLOCKED in production environment");
+  exit(1);
+}
 
 /* -------------------------------------------------- */
 /*  PATHS                                             */
 /* -------------------------------------------------- */
 
-const BASE_SCHEMA_PATH = path.resolve('supabase/migrations/00000000000001_base_schema.sql');
-const SEED_PATH = path.resolve('supabase/migrations/00000000000002_seed.sql');
-const RESET_PATH = path.resolve('supabase/reset.sql');
+const BASE_SCHEMA_PATH = path.resolve(
+  "supabase/migrations/00000000000001_base_schema.sql"
+);
+const SEED_PATH = path.resolve(
+  "supabase/migrations/00000000000002_seed.sql"
+);
+const RESET_PATH = path.resolve("supabase/reset.sql");
 
 /* -------------------------------------------------- */
 /*  UTILS                                             */
@@ -31,44 +44,89 @@ function requireFile(filePath: string) {
   }
 }
 
+/* -------------------------------------------------- */
+/*  ✅ SELF-HEALING exec_sql BOOTSTRAP                */
+/* -------------------------------------------------- */
+
+async function ensureExecSql() {
+  const sql = `
+    CREATE OR REPLACE FUNCTION public.exec_sql(sql text)
+    RETURNS void
+    LANGUAGE plpgsql
+    SECURITY DEFINER
+    AS $$
+    BEGIN
+      EXECUTE sql;
+    END;
+    $$;
+
+    REVOKE ALL ON FUNCTION public.exec_sql(text)
+      FROM PUBLIC, anon, authenticated;
+
+    GRANT EXECUTE ON FUNCTION public.exec_sql(text)
+      TO service_role;
+  `;
+
+  const { error } = await supabase.rpc("exec_sql", { sql });
+
+  if (error && error.code === "PGRST202") {
+    // Fallback bootstrap (function truly missing)
+    await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/rpc/exec_sql`,
+      {
+        method: "POST",
+        headers: {
+          apiKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ sql })
+      }
+    );
+  }
+}
+
+/* -------------------------------------------------- */
+/*  ✅ SAFE SQL RUNNER (NO TRANSACTION WRAP)          */
+/* -------------------------------------------------- */
+
 async function runSQL(filePath: string, label: string) {
   requireFile(filePath);
 
-  const sql = fs.readFileSync(filePath, 'utf-8'); // 🔥 NO TRANSACTION WRAP
+  const sql = fs.readFileSync(filePath, "utf-8");
 
   console.log(`📄 ${label} SQL size:`, sql.length);
-  console.log(`🚀 Calling supabase.rpc('exec_sql') for: ${label} ...`);
+  console.log(`🚀 Running: ${label}`);
 
-  const { data, error } = await supabase.rpc('exec_sql', { sql });
-
-  console.log(`📡 RPC response for ${label}:`, { data, error });
+  const { error } = await supabase.rpc("exec_sql", { sql });
 
   if (error) {
-    console.error(`❌ ${label} failed HARD.`);
+    console.error(`❌ ${label} FAILED`);
+    console.error(error);
     exit(1);
   }
 
-  console.log(`✅ ${label} applied SUCCESSFULLY`);
+  console.log(`✅ ${label} SUCCESS`);
 }
 
-
 /* -------------------------------------------------- */
-/*  SERVICE-ROLE SAFE TABLE EXIST CHECK              */
+/*  SERVICE ROLE SAFE TABLE EXIST CHECK               */
 /* -------------------------------------------------- */
 
 async function tableExists() {
-  const { data, error } = await supabase.rpc('exec_sql', {
+  const { data, error } = await supabase.rpc("exec_sql", {
     sql: `
       SELECT EXISTS (
-        SELECT FROM information_schema.tables
+        SELECT 1
+        FROM information_schema.tables
         WHERE table_schema = 'public'
-        AND table_name = 'users'
+        AND table_name   = 'users'
       );
     `
   });
 
   if (error) {
-    console.error('❌ Failed to check table existence:', error);
+    console.error("❌ Failed to check table existence:", error);
     exit(1);
   }
 
@@ -76,50 +134,48 @@ async function tableExists() {
 }
 
 /* -------------------------------------------------- */
-/*  ✅ AUTO ADMIN CREATION (AUTH + PROFILE)          */
+/*  ✅ AUTO ADMIN CREATION (AUTH + PROFILE SYNC)     */
 /* -------------------------------------------------- */
+
 async function ensureAdminUser() {
-  const DEFAULT_EMAIL = 'admin@bharatmart.com';
-  const DEFAULT_PASSWORD = 'Admin@123';
+  const DEFAULT_EMAIL = "admin@bharatmart.com";
+  const DEFAULT_PASSWORD = "Admin@123";
 
   const ADMIN_EMAIL =
     process.env.ADMIN_EMAIL ||
-    (process.env.NODE_ENV !== 'production' ? DEFAULT_EMAIL : null);
+    (process.env.NODE_ENV !== "production" ? DEFAULT_EMAIL : null);
 
   const ADMIN_PASSWORD =
     process.env.ADMIN_PASSWORD ||
-    (process.env.NODE_ENV !== 'production' ? DEFAULT_PASSWORD : null);
+    (process.env.NODE_ENV !== "production" ? DEFAULT_PASSWORD : null);
 
   if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-    console.error('❌ ADMIN_EMAIL / ADMIN_PASSWORD missing in production env');
+    console.error("❌ ADMIN_EMAIL / ADMIN_PASSWORD missing");
     exit(1);
   }
 
-  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
-    console.warn('⚠️ ADMIN credentials not found in env — using DEFAULT dev credentials');
-  }
+  console.log("🔐 Ensuring admin user exists in Auth...");
+  console.log("📧 Admin Email:", ADMIN_EMAIL);
 
-  console.log('🔐 Ensuring admin user exists in Supabase Auth...');
-  console.log('📧 Admin Email:', ADMIN_EMAIL);
-
-  // 1️⃣ Ensure admin exists in Auth
   const { data: listData, error: listError } =
     await supabase.auth.admin.listUsers();
 
   if (listError) {
-    console.error('❌ Failed to list auth users:', listError);
+    console.error("❌ Failed to list auth users:", listError);
     exit(1);
   }
 
-  const existingAuth = listData.users.find(u => u.email === ADMIN_EMAIL);
+  const existingAuth = listData.users.find(
+    (u) => u.email === ADMIN_EMAIL
+  );
 
   let authUserId: string;
 
   if (existingAuth) {
-    console.log('✅ Admin already exists in Auth');
     authUserId = existingAuth.id;
+    console.log("✅ Admin already exists in Auth");
   } else {
-    console.log('🆕 Creating admin in Supabase Auth...');
+    console.log("🆕 Creating admin in Auth...");
 
     const { data, error } =
       await supabase.auth.admin.createUser({
@@ -129,103 +185,95 @@ async function ensureAdminUser() {
       });
 
     if (error || !data.user) {
-      console.error('❌ Failed to create admin in Auth:', error);
+      console.error("❌ Failed to create admin:", error);
       exit(1);
     }
 
     authUserId = data.user.id;
-    console.log('✅ Admin created in Auth:', authUserId);
+    console.log("✅ Admin created:", authUserId);
   }
 
-  // 2️⃣ Check if admin already exists in public.users by EMAIL
   const { data: existingProfile, error: profileFetchError } =
     await supabase
-      .from('users')
-      .select('id')
-      .eq('email', ADMIN_EMAIL)
+      .from("users")
+      .select("id")
+      .eq("email", ADMIN_EMAIL)
       .maybeSingle();
 
   if (profileFetchError) {
-    console.error('❌ Failed to fetch admin profile:', profileFetchError);
+    console.error("❌ Failed to fetch admin profile:", profileFetchError);
     exit(1);
   }
 
   if (existingProfile) {
-    // ✅ UPDATE existing seeded row to match Auth UID
-    console.log('🔁 Updating existing admin profile to match Auth UID...');
+    console.log("🔁 Updating existing admin profile UID...");
 
     const { error: updateError } =
       await supabase
-        .from('users')
+        .from("users")
         .update({ id: authUserId })
-        .eq('email', ADMIN_EMAIL);
+        .eq("email", ADMIN_EMAIL);
 
     if (updateError) {
-      console.error('❌ Failed to update admin profile:', updateError);
+      console.error("❌ Failed to update admin profile:", updateError);
       exit(1);
     }
-
-    console.log('✅ Admin profile updated with correct Auth UID');
   } else {
-    // ✅ INSERT only if no seed row exists
-    console.log('🆕 Inserting admin into public.users...');
+    console.log("🆕 Inserting admin into public.users...");
 
     const { error: insertError } =
-      await supabase
-        .from('users')
-        .insert({
-          id: authUserId,
-          email: ADMIN_EMAIL,
-          full_name: 'Admin User',
-          role: 'admin'
-        });
+      await supabase.from("users").insert({
+        id: authUserId,
+        email: ADMIN_EMAIL,
+        full_name: "Admin User",
+        role: "admin"
+      });
 
     if (insertError) {
-      console.error('❌ Failed to insert admin profile:', insertError);
+      console.error("❌ Failed to insert admin:", insertError);
       exit(1);
     }
-
-    console.log('✅ Admin inserted into public.users');
   }
+
+  console.log("✅ Admin Auth ↔ users sync complete");
 }
-
-
 
 /* -------------------------------------------------- */
 /*  MAIN                                             */
 /* -------------------------------------------------- */
 
 async function main() {
-  console.log('--------------------------------------');
-  console.log(' DB INIT SCRIPT STARTED');
-  console.log(' RESET MODE:', shouldReset);
-  console.log('--------------------------------------');
+  console.log("--------------------------------------");
+  console.log(" DB INIT SCRIPT STARTED");
+  console.log(" RESET MODE:", shouldReset);
+  console.log("--------------------------------------");
+
+  // ✅ Always self-heal exec_sql before anything else
+  await ensureExecSql();
 
   if (shouldReset) {
-    console.log('🔥 RESETTING DATABASE...');
+    console.log("🔥 RESETTING DATABASE...");
 
-    await runSQL(RESET_PATH, 'Schema Reset');
-    await runSQL(BASE_SCHEMA_PATH, 'Base Schema');
-    await runSQL(SEED_PATH, 'Seed Data');
+    await runSQL(RESET_PATH, "Schema Reset");
+    await runSQL(BASE_SCHEMA_PATH, "Base Schema");
+    await runSQL(SEED_PATH, "Seed Data");
+    await ensureAdminUser();
 
-    await ensureAdminUser();   // ✅ AUTO CREATE ADMIN
-
-    console.log('✅ FULL DB RESET COMPLETE');
+    console.log("✅ FULL DB RESET COMPLETE");
     exit(0);
   }
 
   const exists = await tableExists();
 
   if (!exists) {
-    console.log('🆕 Fresh database detected');
+    console.log("🆕 Fresh database detected");
 
-    await runSQL(BASE_SCHEMA_PATH, 'Base Schema');
+    await runSQL(BASE_SCHEMA_PATH, "Base Schema");
+    await ensureAdminUser();
 
-    await ensureAdminUser();   // ✅ AUTO CREATE ADMIN
-
-    console.log('✅ DB initialized');
+    console.log("✅ DB initialized");
   } else {
-    console.log('✅ DB already initialized — skipping');
+    console.log("✅ DB already initialized — skipping");
   }
 
   exit(0);
@@ -235,7 +283,7 @@ async function main() {
 /*  FATAL ERROR HANDLER                              */
 /* -------------------------------------------------- */
 
-main().catch(err => {
-  console.error('❌ DB INIT FAILED:', err);
+main().catch((err) => {
+  console.error("❌ DB INIT FAILED:", err);
   exit(1);
 });
