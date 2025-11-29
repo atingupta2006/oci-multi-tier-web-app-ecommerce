@@ -37,7 +37,6 @@ async function runSQL(filePath: string, label: string) {
   const sql = fs.readFileSync(filePath, 'utf-8'); // 🔥 NO TRANSACTION WRAP
 
   console.log(`📄 ${label} SQL size:`, sql.length);
-
   console.log(`🚀 Calling supabase.rpc('exec_sql') for: ${label} ...`);
 
   const { data, error } = await supabase.rpc('exec_sql', { sql });
@@ -77,6 +76,91 @@ async function tableExists() {
 }
 
 /* -------------------------------------------------- */
+/*  ✅ AUTO ADMIN CREATION (AUTH + PROFILE)          */
+/* -------------------------------------------------- */
+async function ensureAdminUser() {
+  const DEFAULT_EMAIL = 'admin@bharatmart.com';
+  const DEFAULT_PASSWORD = 'Admin@123';
+
+  // ✅ Fallback logic (safe for dev, strict for prod)
+  const ADMIN_EMAIL =
+    process.env.ADMIN_EMAIL ||
+    (process.env.NODE_ENV !== 'production' ? DEFAULT_EMAIL : null);
+
+  const ADMIN_PASSWORD =
+    process.env.ADMIN_PASSWORD ||
+    (process.env.NODE_ENV !== 'production' ? DEFAULT_PASSWORD : null);
+
+  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+    console.error('❌ ADMIN_EMAIL / ADMIN_PASSWORD not provided in production env');
+    exit(1);
+  }
+
+  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+    console.warn('⚠️ ADMIN credentials not found in env — using DEFAULT dev credentials');
+  }
+
+  console.log('🔐 Ensuring admin user exists in Supabase Auth...');
+  console.log('📧 Admin Email:', ADMIN_EMAIL);
+
+  // 1️⃣ List existing auth users
+  const { data: listData, error: listError } =
+    await supabase.auth.admin.listUsers();
+
+  if (listError) {
+    console.error('❌ Failed to list auth users:', listError);
+    exit(1);
+  }
+
+  const existing = listData.users.find(u => u.email === ADMIN_EMAIL);
+
+  let authUserId: string;
+
+  if (existing) {
+    console.log('✅ Admin already exists in Auth');
+    authUserId = existing.id;
+  } else {
+    console.log('🆕 Creating admin in Supabase Auth...');
+
+    const { data, error } =
+      await supabase.auth.admin.createUser({
+        email: ADMIN_EMAIL,
+        password: ADMIN_PASSWORD,
+        email_confirm: true
+      });
+
+    if (error || !data.user) {
+      console.error('❌ Failed to create admin in Auth:', error);
+      exit(1);
+    }
+
+    authUserId = data.user.id;
+    console.log('✅ Admin created in Auth:', authUserId);
+  }
+
+  // 2️⃣ Sync with public.users
+  console.log('🔁 Syncing admin into public.users...');
+
+  const { error: upsertError } =
+    await supabase
+      .from('users')
+      .upsert({
+        id: authUserId,
+        email: ADMIN_EMAIL,
+        full_name: 'Admin User',
+        role: 'admin'
+      });
+
+  if (upsertError) {
+    console.error('❌ Failed to sync admin to public.users:', upsertError);
+    exit(1);
+  }
+
+  console.log('✅ Admin synced successfully into public.users');
+}
+
+
+/* -------------------------------------------------- */
 /*  MAIN                                             */
 /* -------------------------------------------------- */
 
@@ -93,6 +177,8 @@ async function main() {
     await runSQL(BASE_SCHEMA_PATH, 'Base Schema');
     await runSQL(SEED_PATH, 'Seed Data');
 
+    await ensureAdminUser();   // ✅ AUTO CREATE ADMIN
+
     console.log('✅ FULL DB RESET COMPLETE');
     exit(0);
   }
@@ -103,6 +189,8 @@ async function main() {
     console.log('🆕 Fresh database detected');
 
     await runSQL(BASE_SCHEMA_PATH, 'Base Schema');
+
+    await ensureAdminUser();   // ✅ AUTO CREATE ADMIN
 
     console.log('✅ DB initialized');
   } else {

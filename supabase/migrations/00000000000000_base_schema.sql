@@ -18,6 +18,9 @@ CREATE TABLE IF NOT EXISTS public.users (
   updated_at timestamptz DEFAULT now()
 );
 
+ALTER TABLE public.users 
+ALTER COLUMN id SET DEFAULT gen_random_uuid();
+
 -- ---------- PRODUCTS ----------
 CREATE TABLE IF NOT EXISTS public.products (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -173,3 +176,35 @@ BEGIN
   END LOOP;
 END $$;
 
+
+-- ✅ FORCE TABLE OWNERSHIP (CRITICAL FOR 42501 SAFETY)
+ALTER TABLE public.users OWNER TO postgres;
+ALTER TABLE public.products OWNER TO postgres;
+ALTER TABLE public.orders OWNER TO postgres;
+ALTER TABLE public.order_items OWNER TO postgres;
+ALTER TABLE public.payments OWNER TO postgres;
+ALTER TABLE public.inventory_logs OWNER TO postgres;
+
+
+-- ✅ PERMANENT PERMISSION SAFETY (CRITICAL)
+
+-- Schema access
+GRANT USAGE ON SCHEMA public TO service_role;
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+
+-- Backend full access
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
+
+-- Frontend public product read
+GRANT SELECT ON public.products TO anon, authenticated;
+
+-- Future tables safety
+ALTER DEFAULT PRIVILEGES FOR USER postgres IN SCHEMA public
+GRANT ALL PRIVILEGES ON TABLES TO service_role;
+
+ALTER DEFAULT PRIVILEGES FOR USER postgres IN SCHEMA public
+GRANT ALL PRIVILEGES ON SEQUENCES TO service_role;
+
+GRANT SELECT ON public.orders TO authenticated;
+GRANT SELECT ON public.inventory_logs TO authenticated;
