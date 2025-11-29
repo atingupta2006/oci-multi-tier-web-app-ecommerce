@@ -8,17 +8,12 @@
 
     "db:init": "NODE_ENV=development  ENV_FILE=dev.env  tsx server/scripts/dbInit.ts",
     "db:reset": "NODE_ENV=development  ENV_FILE=dev.env  tsx server/scripts/dbInit.ts --reset",
-
-    "dev:server": "NODE_ENV=development ENV_FILE=dev.env npm run db:init && NODE_ENV=development ENV_FILE=dev.env tsx watch server/index.ts"
-
+    "dev:server": "NODE_ENV=development ENV_FILE=dev.env npm run db:init && NODE_ENV=development ENV_FILE=dev.env tsx watch server/index.ts",
     "dev:worker": "tsx watch server/workers/index.ts",
-
     "build": "vite build && tsc -p tsconfig.server.json",
     "build:client": "vite build",
     "build:server": "tsc -p tsconfig.server.json",
-
-    "start:server": "NODE_ENV=production ENV_FILE=.env node dist/server/index.js"
-
+    "start:server": "NODE_ENV=production ENV_FILE=.env node dist/server/index.js",
     "start:worker": "node dist/server/workers/index.js",
     "start:worker:email": "WORKER_TYPE=email node dist/server/workers/index.js",
     "start:worker:order": "WORKER_TYPE=order node dist/server/workers/index.js",
