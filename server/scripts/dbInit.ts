@@ -82,7 +82,6 @@ async function ensureAdminUser() {
   const DEFAULT_EMAIL = 'admin@bharatmart.com';
   const DEFAULT_PASSWORD = 'Admin@123';
 
-  // ✅ Fallback logic (safe for dev, strict for prod)
   const ADMIN_EMAIL =
     process.env.ADMIN_EMAIL ||
     (process.env.NODE_ENV !== 'production' ? DEFAULT_EMAIL : null);
@@ -92,7 +91,7 @@ async function ensureAdminUser() {
     (process.env.NODE_ENV !== 'production' ? DEFAULT_PASSWORD : null);
 
   if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-    console.error('❌ ADMIN_EMAIL / ADMIN_PASSWORD not provided in production env');
+    console.error('❌ ADMIN_EMAIL / ADMIN_PASSWORD missing in production env');
     exit(1);
   }
 
@@ -103,7 +102,7 @@ async function ensureAdminUser() {
   console.log('🔐 Ensuring admin user exists in Supabase Auth...');
   console.log('📧 Admin Email:', ADMIN_EMAIL);
 
-  // 1️⃣ List existing auth users
+  // 1️⃣ Ensure admin exists in Auth
   const { data: listData, error: listError } =
     await supabase.auth.admin.listUsers();
 
@@ -112,13 +111,13 @@ async function ensureAdminUser() {
     exit(1);
   }
 
-  const existing = listData.users.find(u => u.email === ADMIN_EMAIL);
+  const existingAuth = listData.users.find(u => u.email === ADMIN_EMAIL);
 
   let authUserId: string;
 
-  if (existing) {
+  if (existingAuth) {
     console.log('✅ Admin already exists in Auth');
-    authUserId = existing.id;
+    authUserId = existingAuth.id;
   } else {
     console.log('🆕 Creating admin in Supabase Auth...');
 
@@ -138,26 +137,58 @@ async function ensureAdminUser() {
     console.log('✅ Admin created in Auth:', authUserId);
   }
 
-  // 2️⃣ Sync with public.users
-  console.log('🔁 Syncing admin into public.users...');
-
-  const { error: upsertError } =
+  // 2️⃣ Check if admin already exists in public.users by EMAIL
+  const { data: existingProfile, error: profileFetchError } =
     await supabase
       .from('users')
-      .upsert({
-        id: authUserId,
-        email: ADMIN_EMAIL,
-        full_name: 'Admin User',
-        role: 'admin'
-      });
+      .select('id')
+      .eq('email', ADMIN_EMAIL)
+      .maybeSingle();
 
-  if (upsertError) {
-    console.error('❌ Failed to sync admin to public.users:', upsertError);
+  if (profileFetchError) {
+    console.error('❌ Failed to fetch admin profile:', profileFetchError);
     exit(1);
   }
 
-  console.log('✅ Admin synced successfully into public.users');
+  if (existingProfile) {
+    // ✅ UPDATE existing seeded row to match Auth UID
+    console.log('🔁 Updating existing admin profile to match Auth UID...');
+
+    const { error: updateError } =
+      await supabase
+        .from('users')
+        .update({ id: authUserId })
+        .eq('email', ADMIN_EMAIL);
+
+    if (updateError) {
+      console.error('❌ Failed to update admin profile:', updateError);
+      exit(1);
+    }
+
+    console.log('✅ Admin profile updated with correct Auth UID');
+  } else {
+    // ✅ INSERT only if no seed row exists
+    console.log('🆕 Inserting admin into public.users...');
+
+    const { error: insertError } =
+      await supabase
+        .from('users')
+        .insert({
+          id: authUserId,
+          email: ADMIN_EMAIL,
+          full_name: 'Admin User',
+          role: 'admin'
+        });
+
+    if (insertError) {
+      console.error('❌ Failed to insert admin profile:', insertError);
+      exit(1);
+    }
+
+    console.log('✅ Admin inserted into public.users');
+  }
 }
+
 
 
 /* -------------------------------------------------- */
