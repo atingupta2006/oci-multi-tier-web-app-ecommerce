@@ -3,47 +3,46 @@ import { supabase } from '../config/supabase';
 
 const router = Router();
 
-router.get('/health', async (req: Request, res: Response) => {
+// GET /api/health
+router.get('/health', async (_req, res) => {
   try {
-    const result = await supabase
+    // 1️⃣ Call the debug RPC to know which role this request is actually using
+    const { data: roleInfo, error: roleError } = await supabase.rpc('debug_current_role');
+
+    if (roleError) {
+      console.error('❌ debug_current_role error:', roleError);
+    } else {
+      console.log('🔎 Supabase runtime role info:', roleInfo);
+    }
+
+    // 2️⃣ Your original test query on products
+    const { data, error } = await supabase
       .from('products')
       .select('id')
       .limit(1);
 
-    console.log('🔍 HEALTH RAW RESULT:', JSON.stringify(result, null, 2));
-
-    if (result.error) {
-      throw result.error;
+    if (error) {
+      console.error('❌ Health check products query failed:', error);
+      return res.status(500).json({
+        ok: false,
+        error: error.message,
+        code: error.code,
+        details: error,
+        roleInfo
+      });
     }
 
-    res.json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      database: 'connected',
-      sample_product_id: result.data?.[0]?.id ?? null
+    // 3️⃣ If everything is fine
+    return res.status(200).json({
+      ok: true,
+      count: data?.length ?? 0,
+      roleInfo
     });
-  } catch (err: any) {
-    console.error('❌ HEALTH CHECK HARD ERROR:', {
-      name: err?.name,
-      message: err?.message,
-      code: err?.code,
-      details: err?.details,
-      hint: err?.hint,
-      stack: err?.stack
-    });
-
-    res.status(503).json({
-      status: 'unhealthy',
-      database: 'disconnected',
-      timestamp: new Date().toISOString(),
-      error: {
-        name: err?.name,
-        message: err?.message,
-        code: err?.code,
-        details: err?.details,
-        hint: err?.hint
-      }
+  } catch (err) {
+    console.error('❌ Unexpected health error:', err);
+    return res.status(500).json({
+      ok: false,
+      error: (err as Error).message || 'Unexpected error'
     });
   }
 });
