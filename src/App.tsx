@@ -220,9 +220,9 @@ function App() {
               E-Commerce Platform - Oracle Cloud Infrastructure Demo
             </p>
             <div className="flex items-center gap-4 text-sm text-gray-600">
-              <span>Monitoring: OCI Observability</span>
+              <span>Database: SQLite (Local-First)</span>
               <span>•</span>
-              <span>Database: Supabase</span>
+              <span>Auth: Local JWT</span>
               <span>•</span>
               <span>Stack: React + Express + TypeScript</span>
             </div>
