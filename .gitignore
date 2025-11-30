@@ -21,3 +21,9 @@ dist-ssr
 *.sln
 *.sw?
 .env
+**/.env
+
+# SQLite database files (legacy - not used in current implementation)
+*.db
+*.db-shm
+*.db-wal
