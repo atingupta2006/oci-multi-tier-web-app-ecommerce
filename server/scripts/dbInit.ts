@@ -137,8 +137,8 @@ async function ensureAdminUser() {
 
     const { data, error } =
       await supabase.auth.admin.createUser({
-        email: ADMIN_EMAIL,
-        password: ADMIN_PASSWORD,
+        email: ADMIN_EMAIL || undefined,
+        password: ADMIN_PASSWORD || undefined,
         email_confirm: true
       });
 
@@ -147,7 +147,7 @@ async function ensureAdminUser() {
       exit(1);
     }
 
-    authUserId = data.user.id;
+    authUserId = data.user?.id || "";
     console.log("✅ Admin created:", authUserId);
   }
 

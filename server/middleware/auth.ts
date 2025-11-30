@@ -1,16 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import SQLiteAdapter from '../adapters/database/sqlite';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
-
-let db: SQLiteAdapter;
-
-if (process.env.DATABASE_TYPE === 'sqlite') {
-  db = new SQLiteAdapter({
-    path: process.env.DATABASE_PATH || './bharatmart.db',
-  });
-}
 
 export interface AuthRequest extends Request {
   user?: {
@@ -31,28 +22,11 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as any;
 
-    if (process.env.DATABASE_TYPE === 'sqlite' && db) {
-      const user = db.queryOne<any>(
-        'SELECT id, email, role FROM users WHERE id = ?',
-        [decoded.userId]
-      );
-
-      if (!user) {
-        return res.status(401).json({ error: 'User not found' });
-      }
-
-      req.user = {
-        id: user.id,
-        role: user.role,
-        email: user.email,
-      };
-    } else {
-      req.user = {
-        id: decoded.userId,
-        role: decoded.role,
-        email: decoded.email || '',
-      };
-    }
+    req.user = {
+      id: decoded.userId,
+      role: decoded.role,
+      email: decoded.email || '',
+    };
 
     next();
   } catch (error) {
