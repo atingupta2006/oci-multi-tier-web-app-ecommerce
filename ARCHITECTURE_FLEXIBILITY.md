@@ -54,9 +54,8 @@ No code changes required!
 **Interface:** `IDatabaseAdapter`
 
 **Available Adapters:**
-- ✅ **SQLite** (default) - Zero-setup file database
+- ✅ **Supabase** (default) - Managed PostgreSQL with auth
 - ✅ **PostgreSQL** - Self-hosted
-- ✅ **Supabase** - Managed PostgreSQL with auth
 - ✅ **OCI Autonomous** - Oracle managed
 - 🔧 **MySQL** - Coming soon
 
@@ -366,7 +365,7 @@ That's it! No changes to application code needed.
 ## Best Practices
 
 ### 1. Start Simple
-Begin with defaults (SQLite + in-process workers) and scale when needed.
+Begin with defaults (Supabase + in-process workers) and scale when needed.
 
 ### 2. Test Migration Path
 Before moving to production, test migration in staging:

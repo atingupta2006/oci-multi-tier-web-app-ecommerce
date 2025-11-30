@@ -92,15 +92,12 @@ PostgresError: relation "products" does not exist
 # Copy contents from: supabase/migrations/*.sql
 # Run in order (by timestamp in filename)
 
-# Files to run:
-1. 20251128145524_seed_test_data.sql
-2. 20251128152715_fix_public_access_policies.sql
-3. 20251128155049_add_admin_user_view_policy.sql
-4. 20251128155513_add_user_roles.sql
-5. 20251128155612_update_rls_policies_for_roles.sql
-6. 20251128155815_update_seed_data_indian_names.sql
-7. 20251128160632_fix_infinite_recursion_rls.sql
-8. 20251128163854_add_user_roles_and_rbac_fixed.sql
+# Files to run (in order):
+1. 00000000000000_destroy-db.sql
+2. 00000000000001_exec_sql.sql
+3. 00000000000002_base_schema.sql
+4. 00000000000003_seed.sql
+5. 00000000000004_set_permissions.sql
 ```
 
 ---

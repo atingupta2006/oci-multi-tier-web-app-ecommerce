@@ -9,7 +9,7 @@
 cp config/samples/local-dev-minimal.env .env
 npm install && npm run dev
 ```
-**Features:** SQLite, zero setup, works offline
+**Features:** Supabase, managed PostgreSQL, free tier
 **Time:** 1 minute | **Cost:** $0
 
 ---
@@ -107,9 +107,9 @@ cp config/samples/hybrid-supabase-oci.env .env
 
 ## 🔧 Component-Specific Configs
 
-### Just Need SQLite Setup
+### Just Need Supabase Setup
 ```bash
-cp config/samples/db-sqlite.env .env
+cp config/samples/local-dev-minimal.env .env
 ```
 Single-file database, perfect for edge deployments
 
@@ -169,9 +169,9 @@ High-availability distributed caching
 3. Containerize application
 4. Deploy to K8s cluster
 
-### From SQLite → PostgreSQL
-1. Start: `db-sqlite.env`
-2. Export data: `sqlite3 bharatmart.db .dump > backup.sql`
+### From Supabase → PostgreSQL
+1. Export data from Supabase dashboard
+2. Import to PostgreSQL
 3. Switch to: `db-postgresql.env`
 4. Import data (after syntax conversion)
 
@@ -179,9 +179,9 @@ High-availability distributed caching
 
 ## 🔑 Key Variables by Scenario
 
-### Minimal Setup (SQLite)
+### Minimal Setup (Supabase)
 ```bash
-DATABASE_TYPE=sqlite
+DATABASE_TYPE=supabase
 DATABASE_PATH=./bharatmart.db
 JWT_SECRET=your-secret
 WORKER_MODE=in-process

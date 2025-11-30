@@ -203,7 +203,7 @@ kubectl apply -f deployment/kubernetes/
 **Authentication:**
 - Supabase Auth with email/password
 - JWT tokens for session management
-- Secure password hashing
+- Secure password hashing (handled by Supabase)
 - Session expiry handling
 
 ## Scaling

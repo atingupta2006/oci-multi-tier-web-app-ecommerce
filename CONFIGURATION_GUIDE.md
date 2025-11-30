@@ -114,11 +114,13 @@ OCI_APP_CONFIG_ID=ocid1.appconfig.oc1...
 # ═══════════════════════════════════════════════════════════
 # DATABASE CONFIGURATION
 # ═══════════════════════════════════════════════════════════
-# Options: sqlite | postgresql | supabase | oci-autonomous | mysql
-DATABASE_TYPE=sqlite                # ← DEFAULT (zero setup)
+# Options: supabase | postgresql | oci-autonomous | mysql
+DATABASE_TYPE=supabase              # ← DEFAULT (managed PostgreSQL)
 
-# SQLite (if DATABASE_TYPE=sqlite) - DEFAULT
-DATABASE_PATH=./bharatmart.db       # Auto-creates on first run
+# Supabase (if DATABASE_TYPE=supabase) - DEFAULT
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-key
 
 # PostgreSQL (if DATABASE_TYPE=postgresql)
 DATABASE_URL=postgresql://localhost:5432/bharatmart
@@ -188,33 +190,28 @@ VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
 
 ## 🗄️ Database Options
 
-### Option 1: SQLite (Default - Zero Setup!)
+### Option 1: Supabase (Default - Managed PostgreSQL!)
 
-**Pros:** Zero setup, file-based, works offline, perfect for dev, no dependencies
-**Cons:** Single writer, no built-in replication, limited to 100k requests/day
+**Pros:** Free tier, auto-scaling, built-in auth, real-time subscriptions, managed service
+**Cons:** Third-party service, requires internet
 
 ```bash
-DATABASE_TYPE=sqlite
-DATABASE_PATH=./bharatmart.db    # Auto-creates on first run
-AUTH_PROVIDER=local              # Uses local JWT authentication
-JWT_SECRET=your-secret-key
+DATABASE_TYPE=supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-key
 ```
 
 **Setup:**
 ```bash
-# That's it! Database auto-creates when server starts
-npm run dev:server
-
-# View/manage database:
-sqlite3 bharatmart.db
-.tables
-SELECT * FROM users;
+# 1. Create Supabase project at https://supabase.com
+# 2. Run migrations: npm run db:init
+# 3. Start server: npm run dev:server
 ```
 
 **When to upgrade:**
-- More than 100k requests/day → PostgreSQL
-- Need replication → PostgreSQL or Supabase
-- Need real-time subscriptions → Supabase
+- Need more control → Self-hosted PostgreSQL
+- Enterprise requirements → OCI Autonomous
 
 ### Option 2: Self-Hosted PostgreSQL
 
@@ -525,10 +522,10 @@ AZURE_KEYVAULT_URL=https://bharatmart.vault.azure.net/
 ```bash
 # .env (DEFAULT - Already configured!)
 DEPLOYMENT_MODE=single-vm
-DATABASE_TYPE=sqlite             # ← Auto-creates on first run
-DATABASE_PATH=./bharatmart.db
-AUTH_PROVIDER=local              # ← Local JWT authentication
-JWT_SECRET=local-dev-secret-change-in-production
+DATABASE_TYPE=supabase           # ← Default, managed PostgreSQL
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-key
 WORKER_MODE=in-process
 CACHE_TYPE=memory
 ```
@@ -597,7 +594,7 @@ cp config/samples/single-vm-production.env .env
 
 # Or manually configure:
 DEPLOYMENT_MODE=single-vm
-DATABASE_TYPE=postgresql         # or sqlite
+DATABASE_TYPE=postgresql         # or supabase
 DATABASE_URL=postgresql://localhost:5432/bharatmart
 AUTH_PROVIDER=local
 JWT_SECRET=your-production-secret-64-chars-minimum

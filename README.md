@@ -69,11 +69,9 @@ AUTH_PROVIDER=supabase        # ← Supabase authentication
 WORKER_MODE=none              # ← No workers needed for simple deployments
 CACHE_TYPE=none               # ← No cache needed for simple deployments
 
-# Alternative: Local SQLite (for offline development)
-DATABASE_TYPE=sqlite
-AUTH_PROVIDER=local
-WORKER_MODE=in-process
-CACHE_TYPE=memory
+# Alternative: Self-hosted PostgreSQL
+DATABASE_TYPE=postgresql
+DATABASE_URL=postgresql://localhost:5432/bharatmart
 
 # Production (Multi-Tier with Queues)
 DATABASE_TYPE=postgresql      # or supabase, oci-autonomous
@@ -86,9 +84,8 @@ SECRETS_PROVIDER=oci-vault
 
 ### 📦 Multiple Database Support
 
-- **SQLite** (default) - Zero-setup file database, perfect for development
+- **Supabase** (default) - Managed PostgreSQL with free tier
 - **PostgreSQL** - Self-hosted with full control
-- **Supabase** - Managed PostgreSQL with free tier
 - **OCI Autonomous** - Enterprise Oracle database
 - **MySQL** - Coming soon
 
@@ -155,7 +152,7 @@ See: [Deployment Quickstart](DEPLOYMENT_QUICKSTART.md)
 | **Caching** | Memory/Redis/OCI Cache with configurable TTL |
 | **Monitoring** | Prometheus metrics + Grafana dashboards |
 | **Secrets Management** | Environment vars, OCI Vault, AWS Secrets, Azure KeyVault |
-| **Multiple Databases** | SQLite, PostgreSQL, Supabase, OCI Autonomous, MySQL |
+| **Multiple Databases** | Supabase, PostgreSQL, OCI Autonomous, MySQL |
 | **Queue Systems** | In-process, Bull+Redis, OCI Queue, AWS SQS |
 | **Deployment Modes** | Single VM, Multi-tier, Kubernetes |
 
@@ -184,11 +181,11 @@ Express.js 4.18 + Node.js 20+ + TypeScript
 
 ### Database Layer
 ```
-Default: SQLite 3 (better-sqlite3 9.2)
+Default: Supabase (managed PostgreSQL)
 ├── Zero setup required
-├── File-based, perfect for development
+├── Managed service with free tier
 ├── Auto-schema initialization
-└── Upgradeable: PostgreSQL, Supabase, OCI Autonomous, MySQL
+└── Upgradeable: PostgreSQL, OCI Autonomous, MySQL
 ```
 
 ### Infrastructure Layer
@@ -329,18 +326,14 @@ npm run dev:server    # Terminal 2: Backend (http://localhost:3000)
 - **No workers** - WORKER_MODE=none (no Redis required)
 - **No cache** - CACHE_TYPE=none (no Redis required)
 
-### 🔄 Alternative: Local SQLite Setup (Offline)
+### 🔄 Alternative: Self-Hosted PostgreSQL
 
 Want to run without external services?
 
 ```bash
 # Edit .env
-DATABASE_TYPE=sqlite
-AUTH_PROVIDER=local
-WORKER_MODE=in-process
-CACHE_TYPE=memory
-
-# Restart servers - SQLite database auto-creates on first run!
+DATABASE_TYPE=postgresql
+DATABASE_URL=postgresql://localhost:5432/bharatmart
 ```
 
 ### 👤 Login with Test Users
@@ -460,20 +453,17 @@ INSERT INTO users (id, email, full_name, role) VALUES (
 
 ```bash
 # .env (already configured)
-DATABASE_TYPE=sqlite
-DATABASE_PATH=./bharatmart.db
-AUTH_PROVIDER=local
-JWT_SECRET=local-dev-secret-change-in-production
-WORKER_MODE=in-process
-CACHE_TYPE=memory
+DATABASE_TYPE=supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-key
 ```
 
 That's it! Runs with:
-- **SQLite** database (file-based, auto-creates)
-- **Local JWT** authentication
+- **Supabase** database (managed PostgreSQL)
+- **Supabase Auth** (built-in authentication)
 - **In-process** workers
 - **Memory** cache
-- **Zero external dependencies!**
 
 ### 🎛️ Advanced (Mix & Match)
 
@@ -482,15 +472,13 @@ That's it! Runs with:
 DEPLOYMENT_MODE=single-vm | multi-tier | kubernetes
 
 # Database (pick one)
-DATABASE_TYPE=sqlite                # ← DEFAULT, zero setup
+DATABASE_TYPE=supabase              # ← DEFAULT, managed PostgreSQL
 DATABASE_TYPE=postgresql            # Self-hosted
-DATABASE_TYPE=supabase              # Managed PostgreSQL
 DATABASE_TYPE=oci-autonomous        # Enterprise Oracle
 DATABASE_TYPE=mysql                 # Coming soon
 
 # Authentication (pick one)
-AUTH_PROVIDER=local                 # ← DEFAULT, JWT tokens
-AUTH_PROVIDER=supabase              # Supabase Auth
+AUTH_PROVIDER=supabase              # ← DEFAULT, Supabase Auth
 
 # Workers (pick one)
 WORKER_MODE=in-process              # ← DEFAULT, no deps
@@ -515,11 +503,12 @@ SECRETS_PROVIDER=azure-keyvault     # Azure
 
 **Example 1: Local Development (DEFAULT)**
 ```bash
-DATABASE_TYPE=sqlite
-AUTH_PROVIDER=local
+DATABASE_TYPE=supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
 WORKER_MODE=in-process
 CACHE_TYPE=memory
-# Time: 1 min | Cost: $0 | No internet needed
+# Time: 5 min | Cost: $0 | Free tier available
 ```
 
 **Example 2: Production (Single VM)**
@@ -720,10 +709,11 @@ bharatmart/
 │
 ├── 🗄️ DATABASE (supabase/)
 │   └── migrations/                 # Database migrations (run in order)
-│       ├── 20251128145524_seed_test_data.sql
-│       ├── 20251128152715_fix_public_access_policies.sql
-│       ├── 20251128155513_add_user_roles.sql
-│       └── ... (8 migration files total)
+│       ├── 00000000000000_destroy-db.sql
+│       ├── 00000000000001_exec_sql.sql
+│       ├── 00000000000002_base_schema.sql
+│       ├── 00000000000003_seed.sql
+│       └── 00000000000004_set_permissions.sql
 │
 ├── 📚 DOCUMENTATION
 │   ├── README.md                   # ← You are here

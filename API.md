@@ -10,6 +10,8 @@ Complete REST API reference for BharatMart.
 
 BharatMart uses Supabase Auth for authentication. Include the auth token in requests:
 
+**Note:** The `/api/auth/*` endpoints (signup, login, refresh, me) return HTTP 410 (Gone) as SQLite-based authentication has been removed. Use Supabase Auth client-side instead.
+
 ```bash
 Authorization: Bearer <your-supabase-jwt-token>
 ```

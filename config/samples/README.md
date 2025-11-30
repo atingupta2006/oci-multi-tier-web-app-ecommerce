@@ -27,7 +27,7 @@ Copy-paste ready configuration files for different deployment scenarios.
 ## Config Files
 
 ### Development
-- `local-dev-minimal.env` - SQLite, in-memory, zero dependencies
+- `local-dev-minimal.env` - Supabase, managed PostgreSQL, free tier
 - `local-dev-full.env` - Local PostgreSQL + Redis, full production simulation
 - `local-dev-supabase.env` - Supabase for easy cloud testing
 
@@ -57,7 +57,7 @@ Copy-paste ready configuration files for different deployment scenarios.
 - `hybrid-multi-cloud.env` - Best services from each cloud
 
 ### Database Variations
-- `db-sqlite.env` - SQLite for simple deployments
+- `db-sqlite.env` - (removed - SQLite support discontinued)
 - `db-postgresql.env` - PostgreSQL configuration
 - `db-mysql.env` - MySQL configuration
 - `db-supabase.env` - Supabase configuration
