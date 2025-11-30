@@ -1,4 +1,4 @@
-import { Registry, Counter, Histogram, Gauge } from 'prom-client';
+import { Registry, Counter, Histogram } from 'prom-client';
 
 export const register = new Registry();
 
@@ -46,27 +46,6 @@ export const paymentValueTotal = new Counter({
   name: 'payments_value_total',
   help: 'Total value of all payments in currency units',
   labelNames: ['status'],
-  registers: [register],
-});
-
-export const productStockGauge = new Gauge({
-  name: 'product_stock_level',
-  help: 'Current stock level for products',
-  labelNames: ['product_id', 'product_name', 'category'],
-  registers: [register],
-});
-
-export const databaseQueryDuration = new Histogram({
-  name: 'database_query_duration_seconds',
-  help: 'Duration of database queries in seconds',
-  labelNames: ['operation', 'table'],
-  buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1],
-  registers: [register],
-});
-
-export const activeOrdersGauge = new Gauge({
-  name: 'active_orders_total',
-  help: 'Current number of active orders (pending, processing)',
   registers: [register],
 });
 

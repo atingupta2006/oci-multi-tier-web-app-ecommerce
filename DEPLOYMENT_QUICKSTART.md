@@ -43,6 +43,25 @@ npm run dev:server       # Terminal 2 - Backend (http://localhost:3000)
 
 **Done!** Visit http://localhost:5173
 
+### Local Observability
+
+**Start Prometheus:**
+```bash
+# Terminal 3: Start Prometheus
+docker run -d --name prometheus \
+  -p 9090:9090 \
+  -v $(pwd)/deployment/prometheus-local.yml:/etc/prometheus/prometheus.yml \
+  prom/prometheus:latest
+
+# Open Prometheus UI
+# http://localhost:9090 → Status → Targets
+# Verify "backend-api" target is UP
+```
+
+**View Metrics:**
+- Backend metrics: http://localhost:3000/metrics
+- Prometheus UI: http://localhost:9090
+
 ---
 
 ## 🖥️ Scenario 2: Single VM Production (30 minutes)

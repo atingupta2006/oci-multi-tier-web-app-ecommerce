@@ -21,6 +21,12 @@ The application consists of 6 independent, scalable tiers:
 - SSH key pair for OCI instances
 - Domain name (optional, for custom URLs)
 
+## Configuration Files
+
+**Prometheus Configurations:**
+- `prometheus-local.yml` → Local laptop training (scrapes `localhost:3000`)
+- `prometheus.yml` → Docker/OCI deployment (scrapes `backend:3000`)
+
 ## Deployment Steps
 
 ### 1. Frontend Deployment (OCI Object Storage)

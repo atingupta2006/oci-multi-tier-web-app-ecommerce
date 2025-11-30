@@ -885,6 +885,28 @@ process_resident_memory_bytes                   # Memory usage
 nodejs_heap_size_total_bytes                    # Node.js heap
 ```
 
+### Local Monitoring with Prometheus
+
+**Quick Start:**
+```bash
+# 1. Start backend (exposes /metrics endpoint)
+npm run dev:server
+
+# 2. Start Prometheus (in separate terminal)
+docker run -d --name prometheus \
+  -p 9090:9090 \
+  -v $(pwd)/deployment/prometheus-local.yml:/etc/prometheus/prometheus.yml \
+  prom/prometheus:latest
+
+# 3. Open Prometheus UI
+# http://localhost:9090
+
+# 4. View metrics endpoint
+# http://localhost:3000/metrics
+```
+
+**Configuration:** `deployment/prometheus-local.yml` (scrapes `localhost:3000/metrics`)
+
 ### Monitoring Stack
 
 ```bash
