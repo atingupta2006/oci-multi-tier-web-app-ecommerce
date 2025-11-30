@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Search, DollarSign, Package } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { formatINR } from '../../lib/currency';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -29,15 +29,11 @@ export function AdminProducts() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('name', { ascending: true });
-
-      if (error) throw error;
-      setProducts(data || []);
+      const response = await api.get<{ data: Product[] }>('/api/products');
+      setProducts(response.data || []);
     } catch (error) {
       console.error('Failed to fetch products:', error);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -47,15 +43,11 @@ export function AdminProducts() {
     if (!confirm('Are you sure you want to delete this product?')) return;
 
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      await api.delete(`/api/products/${id}`);
       setProducts(products.filter((p) => p.id !== id));
     } catch (error) {
       console.error('Failed to delete product:', error);
+      alert(`Failed to delete product: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -215,27 +207,15 @@ function ProductForm({ product, onClose, onSuccess }: ProductFormProps) {
 
     try {
       if (product) {
-        const { error } = await supabase
-          .from('products')
-          .update({
-            ...formData,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', product.id);
-
-        if (error) throw error;
+        await api.put(`/api/products/${product.id}`, formData);
       } else {
-        const { error } = await supabase
-          .from('products')
-          .insert([formData]);
-
-        if (error) throw error;
+        await api.post('/api/products', formData);
       }
 
       onSuccess();
     } catch (error) {
       console.error('Failed to save product:', error);
-      alert('Failed to save product. Check console for details.');
+      alert(`Failed to save product: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }

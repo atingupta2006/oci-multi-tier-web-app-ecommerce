@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ShoppingCart, User, Package, DollarSign, Calendar } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { Order, OrderItem, Product, Payment, User as UserType } from '../types/database';
 import { formatINR } from '../lib/currency';
 
@@ -21,65 +21,40 @@ export function OrderManagement() {
 
   const fetchOrders = async () => {
     try {
-      console.log('📦 Fetching orders from Supabase...');
+      console.log('📦 Fetching orders from backend API...');
 
-      const { data: ordersData, error: ordersError } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const response = await api.get<{ data: Order[] }>('/api/orders');
 
-      if (ordersError) {
-        console.error('❌ Orders error:', ordersError);
-        throw ordersError;
-      }
-
-      if (ordersData) {
+      if (response.data && response.data.length > 0) {
+        // Backend returns orders list, fetch full details for each
         const ordersWithDetails = await Promise.all(
-          ordersData.map(async (order) => {
-            const { data: itemsData } = await supabase
-              .from('order_items')
-              .select('*')
-              .eq('order_id', order.id);
-
-            const itemsWithProducts = await Promise.all(
-              (itemsData || []).map(async (item) => {
-                const { data: productData } = await supabase
-                  .from('products')
-                  .select('*')
-                  .eq('id', item.product_id)
-                  .single();
-
-                return { ...item, product: productData };
-              })
-            );
-
-            const { data: paymentData } = await supabase
-              .from('payments')
-              .select('*')
-              .eq('order_id', order.id)
-              .maybeSingle();
-
-            const { data: userData } = await supabase
-              .from('users')
-              .select('*')
-              .eq('id', order.user_id)
-              .maybeSingle();
-
-            return {
-              ...order,
-              items: itemsWithProducts,
-              payment: paymentData || undefined,
-              user: userData || undefined,
-            };
+          response.data.map(async (order) => {
+            try {
+              // Fetch full order details with items and payment
+              const orderDetails = await api.get<OrderWithDetails>(`/api/orders/${order.id}`);
+              return orderDetails;
+            } catch (err) {
+              console.warn(`Failed to fetch details for order ${order.id}:`, err);
+              // Return basic order if details fetch fails
+              return {
+                ...order,
+                items: [],
+                payment: undefined,
+                user: undefined,
+              } as OrderWithDetails;
+            }
           })
         );
 
         console.log('✅ Orders loaded:', ordersWithDetails.length);
         setOrders(ordersWithDetails);
+      } else {
+        setOrders([]);
       }
     } catch (error) {
       console.error('💥 Error fetching orders:', error);
-      alert('Failed to load orders. Check console for details.');
+      alert(`Failed to load orders: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setOrders([]);
     } finally {
       setLoading(false);
     }

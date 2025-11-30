@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Package, Truck, CheckCircle, Clock, XCircle, ArrowLeft, CreditCard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { formatINR } from '../lib/currency';
 
 interface Order {
@@ -97,16 +97,18 @@ export function OrderTracking({ orderId, onBack }: OrderTrackingProps) {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
+      const response = await api.get<{ data: Order[] }>('/api/orders', {
+        user_id: user?.id,
+      });
 
-      if (error) throw error;
-      setOrders(data || []);
+      if (response.data) {
+        setOrders(response.data);
+      } else {
+        setOrders([]);
+      }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Failed to fetch orders');
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -114,39 +116,16 @@ export function OrderTracking({ orderId, onBack }: OrderTrackingProps) {
 
   const fetchOrderDetails = async (id: string) => {
     try {
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
-
-      if (orderError) throw orderError;
-
-      const { data: items, error: itemsError } = await supabase
-        .from('order_items')
-        .select(`
-          *,
-          products (*)
-        `)
-        .eq('order_id', id);
-
-      if (itemsError) throw itemsError;
-
-      const { data: payment, error: paymentError } = await supabase
-        .from('payments')
-        .select('*')
-        .eq('order_id', id)
-        .maybeSingle();
-
-      if (paymentError) throw paymentError;
+      // Backend returns full order details with items and payment
+      const orderDetails = await api.get<Order & { items: any[]; payment: any }>(`/api/orders/${id}`);
 
       setSelectedOrder({
-        ...order,
-        items: items || [],
-        payment: payment,
+        ...orderDetails,
+        items: orderDetails.items || [],
+        payment: orderDetails.payment,
       });
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Failed to fetch order details');
     }
   };
 

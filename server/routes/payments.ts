@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { supabase } from '../config/supabase';
 import { logger, logBusinessEvent } from '../config/logger';
-import { paymentProcessedTotal, paymentValueTotal } from '../config/metrics';
+import { paymentProcessedTotal, paymentValueTotal, circuitBreakerOpenTotal } from '../config/metrics';
 
 const router = Router();
 
@@ -75,6 +75,10 @@ router.post('/', async (req: Request, res: Response) => {
 
     const paymentStatus = simulateFailure ? 'failed' : 'completed';
     const transactionId = simulateFailure ? null : `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    if (paymentStatus === 'failed') {
+      circuitBreakerOpenTotal.inc();
+    }
 
     const { data, error } = await supabase
       .from('payments')

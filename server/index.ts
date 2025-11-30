@@ -1,67 +1,18 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import express from 'express';
-import cors from 'cors';
-import { logApiEvent } from './middleware/logger';
-import { metricsMiddleware } from './middleware/metricsMiddleware';
-import { errorHandler, notFoundHandler } from './middleware/errorHandler';
-import { register } from './config/metrics';
+import './tracing';
+
+import { serviceRestartsTotal } from './config/metrics';
 import { logger } from './config/logger';
-import authRoutes from './routes/auth';
-import healthRoutes from './routes/health';
-import productsRoutes from './routes/products';
-import ordersRoutes from './routes/orders';
-import paymentsRoutes from './routes/payments';
+import app from './app';
 
-const app = express();
 const PORT = Number(process.env.PORT) || 3000;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
-
-app.use(cors({
-  origin: FRONTEND_URL,
-  credentials: true,
-}));
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-app.use(metricsMiddleware);
-app.use(logApiEvent);
-
-app.get('/metrics', async (_req, res) => {
-  res.set('Content-Type', register.contentType);
-  res.end(await register.metrics());
-});
-
-app.use('/api/auth', authRoutes);
-app.use('/api', healthRoutes);
-app.use('/api/products', productsRoutes);
-app.use('/api/orders', ordersRoutes);
-app.use('/api/payments', paymentsRoutes);
-
-app.get('/', (_req, res) => {
-  res.json({
-    name: 'BharatMart API',
-    version: '1.0.0',
-    status: 'running',
-    endpoints: {
-      auth: '/api/auth',
-      health: '/api/health',
-      ready: '/api/health/ready',
-      products: '/api/products',
-      orders: '/api/orders',
-      payments: '/api/payments',
-    },
-  });
-});
-
-app.use(notFoundHandler);
-app.use(errorHandler);
 
 // ✅ SINGLE, SECURE, GUARDED SERVER START
 async function startServer() {
   const server = app.listen(PORT, () => {
+    serviceRestartsTotal.inc();
     logger.info('Server started', {
       port: PORT,
       environment: process.env.NODE_ENV || 'development',
@@ -85,4 +36,10 @@ async function startServer() {
 
 startServer();
 
-export default app;
+// IMMEDIATE TEST - Log right after server starts
+setTimeout(() => {
+  console.log('🧪 Testing logger after 1 second...');
+  logger.info('Test log from server startup');
+}, 1000);
+
+// App is exported from server/app.ts for testing

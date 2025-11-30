@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { supabase } from '../config/supabase';
 import { logger, logBusinessEvent } from '../config/logger';
-import { orderCreatedTotal, orderValueTotal } from '../config/metrics';
+import { orderCreatedTotal, orderValueTotal, ordersSuccessTotal, ordersFailedTotal } from '../config/metrics';
 import { cacheMiddleware, invalidateCache } from '../middleware/cache';
 import { queueService } from '../config/queue';
 
@@ -140,6 +140,7 @@ router.post('/', async (req: Request, res: Response) => {
         user_id,
         total_amount: totalAmount,
         items_count: items.length,
+        orderStatus: order.status,
       },
     });
 
@@ -157,8 +158,10 @@ router.post('/', async (req: Request, res: Response) => {
     await invalidateCache('orders:*');
 
     res.status(201).json(order);
+    ordersSuccessTotal.inc();
   } catch (error) {
     logger.error('Error creating order', { error });
+    ordersFailedTotal.inc();
     res.status(500).json({ error: 'Failed to create order' });
   }
 });

@@ -1,5 +1,6 @@
 import Redis from 'ioredis';
 import { logger } from './logger';
+import { externalCallLatencyMs, retryAttemptsTotal } from './metrics';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 const CACHE_TYPE = process.env.CACHE_TYPE || 'none';
@@ -16,6 +17,7 @@ function initializeRedis() {
   redis = new Redis(REDIS_URL, {
     maxRetriesPerRequest: 3,
     retryStrategy(times) {
+      retryAttemptsTotal.inc({ dependency: 'redis' });
       const delay = Math.min(times * 50, 2000);
       return delay;
     },
@@ -46,7 +48,10 @@ export const cacheService = {
       return null;
     }
     try {
+      const startTime = Date.now();
       const data = await redis.get(key);
+      const duration = Date.now() - startTime;
+      externalCallLatencyMs.observe({ dependency: 'redis' }, duration);
       if (!data) return null;
       return JSON.parse(data) as T;
     } catch (error) {
@@ -62,7 +67,10 @@ export const cacheService = {
       return false;
     }
     try {
+      const startTime = Date.now();
       await redis.setex(key, ttlSeconds, JSON.stringify(value));
+      const duration = Date.now() - startTime;
+      externalCallLatencyMs.observe({ dependency: 'redis' }, duration);
       return true;
     } catch (error) {
       logger.error(`Cache set error for key ${key}:`, error);
@@ -77,7 +85,10 @@ export const cacheService = {
       return false;
     }
     try {
+      const startTime = Date.now();
       await redis.del(key);
+      const duration = Date.now() - startTime;
+      externalCallLatencyMs.observe({ dependency: 'redis' }, duration);
       return true;
     } catch (error) {
       logger.error(`Cache delete error for key ${key}:`, error);

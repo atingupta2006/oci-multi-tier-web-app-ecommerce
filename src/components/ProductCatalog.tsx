@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Search, Package, Filter, ShoppingCart, Plus } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { Product } from '../types/database';
 import { useCart } from '../contexts/CartContext';
 import { formatINR } from '../lib/currency';
@@ -25,30 +25,24 @@ export function ProductCatalog() {
 
   const fetchProducts = async () => {
     try {
-      console.log('🔍 Fetching products from Supabase...');
-      console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+      console.log('🔍 Fetching products from backend API...');
+      console.log('API URL:', import.meta.env.VITE_API_URL || 'http://localhost:3000');
 
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('name', { ascending: true });
-
-      if (error) {
-        console.error('❌ Supabase error:', error);
-        throw error;
-      }
-
-      if (data) {
-        console.log('✅ Products loaded:', data.length);
-        setProducts(data);
-        const uniqueCategories = [...new Set(data.map(p => p.category))];
+      const response = await api.get<{ data: Product[]; count: number }>('/api/products');
+      
+      if (response.data) {
+        console.log('✅ Products loaded:', response.data.length);
+        setProducts(response.data);
+        const uniqueCategories = [...new Set(response.data.map(p => p.category))];
         setCategories(uniqueCategories);
       } else {
-        console.warn('⚠️ No products returned from database');
+        console.warn('⚠️ No products returned from API');
+        setProducts([]);
       }
     } catch (error) {
       console.error('💥 Error fetching products:', error);
-      alert('Failed to load products. Check console for details.');
+      alert(`Failed to load products: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
