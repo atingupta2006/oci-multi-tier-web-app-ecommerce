@@ -150,3 +150,15 @@ variable "tags" {
     "Environment" = "dev"
   }
 }
+
+variable "compute_instance_ocpus" {
+  description = "OCPUs for backend compute instance (Flex shapes only)"
+  type        = number
+  default     = 2
+}
+
+variable "compute_instance_memory_in_gb" {
+  description = "Memory in GB for backend compute instance (Flex shapes only)"
+  type        = number
+  default     = 12
+}

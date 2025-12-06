@@ -60,19 +60,21 @@ output "load_balancer_url" {
 ############################################
 
 output "frontend_instance_id" {
-  description = "OCID of the frontend compute instance"
-  value       = oci_core_instance.bharatmart_frontend.id
+  description = "OCIDs of the frontend VM instances"
+  value       = oci_core_instance.bharatmart_frontend[*].id
 }
 
 output "frontend_public_ip" {
-  description = "Public IP of frontend VM"
-  value       = oci_core_instance.bharatmart_frontend.public_ip
+  description = "Public IPs of the frontend VM instances"
+  value       = oci_core_instance.bharatmart_frontend[*].public_ip
 }
 
+
 output "frontend_private_ip" {
-  description = "Private IP of frontend VM"
-  value       = oci_core_instance.bharatmart_frontend.private_ip
+  description = "Private IPs of the frontend VM instances"
+  value       = oci_core_instance.bharatmart_frontend[*].private_ip
 }
+
 
 ############################################
 # Backend VM Outputs
