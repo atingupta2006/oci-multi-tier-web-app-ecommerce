@@ -1,4 +1,15 @@
 ############################################
+# Common Locals for Outputs
+############################################
+
+# This protects against async LB IP availability issues.
+locals {
+  lb_public_ips = flatten([
+    for ip in oci_load_balancer_load_balancer.bharatmart_lb.ip_address_details : ip.ip_address
+  ])
+}
+
+############################################
 # VCN & Subnet Outputs
 ############################################
 
@@ -23,7 +34,7 @@ output "private_subnet_id" {
 }
 
 ############################################
-# Internet Gateway / NAT Gateway
+# Internet Gateway / NAT Gateway Outputs
 ############################################
 
 output "internet_gateway_id" {
@@ -46,35 +57,33 @@ output "load_balancer_id" {
 }
 
 output "load_balancer_public_ip" {
-  description = "Public IP address of the Load Balancer"
-  value       = oci_load_balancer_load_balancer.bharatmart_lb.ip_address_details[0].ip_address
+  description = "Public IP(s) assigned to Load Balancer"
+  value       = local.lb_public_ips[0]
 }
 
 output "load_balancer_url" {
   description = "URL to access the frontend application"
-  value       = "http://${oci_load_balancer_load_balancer.bharatmart_lb.ip_address_details[0].ip_address}"
+  value       = "http://${local.lb_public_ips[0]}"
 }
 
 ############################################
 # Frontend VM Outputs
 ############################################
 
-output "frontend_instance_id" {
+output "frontend_instance_ids" {
   description = "OCIDs of the frontend VM instances"
   value       = oci_core_instance.bharatmart_frontend[*].id
 }
 
-output "frontend_public_ip" {
+output "frontend_public_ips" {
   description = "Public IPs of the frontend VM instances"
   value       = oci_core_instance.bharatmart_frontend[*].public_ip
 }
 
-
-output "frontend_private_ip" {
+output "frontend_private_ips" {
   description = "Private IPs of the frontend VM instances"
   value       = oci_core_instance.bharatmart_frontend[*].private_ip
 }
-
 
 ############################################
 # Backend VM Outputs
@@ -82,17 +91,17 @@ output "frontend_private_ip" {
 
 output "backend_instance_ids" {
   description = "OCIDs of backend compute instances"
-  value       = [for i in oci_core_instance.bharatmart_backend : i.id]
+  value       = oci_core_instance.bharatmart_backend[*].id
 }
 
 output "backend_private_ips" {
   description = "Private IPs of backend compute instances"
-  value       = [for i in oci_core_instance.bharatmart_backend : i.private_ip]
+  value       = oci_core_instance.bharatmart_backend[*].private_ip
 }
 
 output "backend_public_ips" {
-  description = "Public IPs for backend instances (only if enabled)"
-  value       = var.enable_backend_public_ip ? [for i in oci_core_instance.bharatmart_backend : i.public_ip] : []
+  description = "Public IPs for backend instances (if enabled)"
+  value       = var.enable_backend_public_ip ? oci_core_instance.bharatmart_backend[*].public_ip : []
 }
 
 ############################################
@@ -100,11 +109,11 @@ output "backend_public_ips" {
 ############################################
 
 output "frontend_url" {
-  description = "URL to access the frontend"
-  value       = "http://${oci_load_balancer_load_balancer.bharatmart_lb.ip_address_details[0].ip_address}"
+  description = "URL to access the frontend service"
+  value       = "http://${local.lb_public_ips[0]}"
 }
 
 output "backend_api_url" {
   description = "Base URL for backend API via Load Balancer"
-  value       = "http://${oci_load_balancer_load_balancer.bharatmart_lb.ip_address_details[0].ip_address}:3000/api"
+  value       = "http://${local.lb_public_ips[0]}:3000/api"
 }

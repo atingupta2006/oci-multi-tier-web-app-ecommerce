@@ -6,6 +6,15 @@ provider "oci" {
   region = var.region
 }
 
+# Availability Domains (correct data sources)
+data "oci_identity_availability_domains" "ads" {
+  compartment_id = var.tenancy_ocid
+}
+
+data "oci_identity_availability_domain" "primary" {
+  compartment_id = var.tenancy_ocid
+  ad_number      = 1  # First AD (was "AD-1")
+}
 
 locals {
   common_tags = merge(var.tags, {
@@ -104,7 +113,7 @@ resource "oci_core_security_list" "public_security_list" {
     protocol    = "6"
     source      = "0.0.0.0/0"
     description = "Allow HTTPS"
-    tcp_options { 
+    tcp_options {
       min = 443
       max = 443
     }
@@ -114,9 +123,9 @@ resource "oci_core_security_list" "public_security_list" {
     protocol    = "6"
     source      = "0.0.0.0/0"
     description = "Allow SSH (dev only)"
-    tcp_options { 
+    tcp_options {
       min = 22
-      max = 22 
+      max = 22
     }
   }
 
@@ -167,27 +176,27 @@ resource "oci_core_security_list" "private_security_list" {
 ############################################
 
 resource "oci_core_subnet" "public_subnet" {
-  compartment_id        = var.compartment_id
-  vcn_id                = oci_core_vcn.bharatmart_vcn.id
-  cidr_block            = var.public_subnet_cidr
-  route_table_id        = oci_core_route_table.public_route_table.id
-  security_list_ids     = [oci_core_security_list.public_security_list.id]
+  compartment_id             = var.compartment_id
+  vcn_id                     = oci_core_vcn.bharatmart_vcn.id
+  cidr_block                 = var.public_subnet_cidr
+  route_table_id             = oci_core_route_table.public_route_table.id
+  security_list_ids          = [oci_core_security_list.public_security_list.id]
   prohibit_public_ip_on_vnic = false
-  display_name          = "${var.project_name}-${var.environment}-public-subnet"
-  dns_label             = "public"
+  display_name               = "${var.project_name}-${var.environment}-public-subnet"
+  dns_label                  = "public"
 
   freeform_tags = local.common_tags
 }
 
 resource "oci_core_subnet" "private_subnet" {
-  compartment_id        = var.compartment_id
-  vcn_id                = oci_core_vcn.bharatmart_vcn.id
-  cidr_block            = var.private_subnet_cidr
-  route_table_id        = var.enable_nat_gateway ? oci_core_route_table.private_route_table[0].id : oci_core_vcn.bharatmart_vcn.default_route_table_id
-  security_list_ids     = [oci_core_security_list.private_security_list.id]
+  compartment_id             = var.compartment_id
+  vcn_id                     = oci_core_vcn.bharatmart_vcn.id
+  cidr_block                 = var.private_subnet_cidr
+  route_table_id             = var.enable_nat_gateway ? oci_core_route_table.private_route_table[0].id : oci_core_vcn.bharatmart_vcn.default_route_table_id
+  security_list_ids          = [oci_core_security_list.private_security_list.id]
   prohibit_public_ip_on_vnic = true
-  display_name          = "${var.project_name}-${var.environment}-private-subnet"
-  dns_label             = "private"
+  display_name               = "${var.project_name}-${var.environment}-private-subnet"
+  dns_label                  = "private"
 
   freeform_tags = local.common_tags
 }
@@ -198,14 +207,15 @@ resource "oci_core_subnet" "private_subnet" {
 
 resource "oci_core_instance" "bharatmart_frontend" {
   count               = var.frontend_instance_count
-  availability_domain = var.availability_domain
+  availability_domain = data.oci_identity_availability_domain.primary.name
   compartment_id      = var.compartment_id
   display_name        = "${var.project_name}-${var.environment}-frontend-${count.index + 1}"
-  shape               = var.frontend_instance_shape
+  shape               = var.frontend_instance_shape  # VM.Standard.A1.Flex
 
+  # A1 Flex shape config
   shape_config {
-    ocpus         = 2
-    memory_in_gbs = 12
+    ocpus         = var.compute_instance_ocpus
+    memory_in_gbs = var.compute_instance_memory_in_gb
   }
 
   create_vnic_details {
@@ -243,14 +253,15 @@ EOF
 
 resource "oci_core_instance" "bharatmart_backend" {
   count               = var.compute_instance_count
-  availability_domain = var.availability_domain
+  availability_domain = data.oci_identity_availability_domain.primary.name
   compartment_id      = var.compartment_id
   display_name        = "${var.project_name}-${var.environment}-backend-${count.index + 1}"
-  shape               = var.compute_instance_shape
+  shape               = var.compute_instance_shape  # VM.Standard.A1.Flex
 
+  # A1 Flex shape config
   shape_config {
-    ocpus         = 2
-    memory_in_gbs = 12
+    ocpus         = var.compute_instance_ocpus
+    memory_in_gbs = var.compute_instance_memory_in_gb
   }
 
   create_vnic_details {
@@ -310,19 +321,19 @@ resource "oci_load_balancer_backend_set" "frontend_set" {
   policy           = "ROUND_ROBIN"
 
   health_checker {
-    protocol    = "HTTP"
-    port        = 80
-    url_path    = "/"
-    retries     = 3
+    protocol          = "HTTP"
+    port              = 80
+    url_path          = "/"
+    retries           = 3
     timeout_in_millis = 3000
-    interval_ms = 10000
+    interval_ms       = 10000
   }
 }
 
 resource "oci_load_balancer_backend_set" "backend_set" {
   load_balancer_id = oci_load_balancer_load_balancer.bharatmart_lb.id
-  name   = "backend-api-backendset"
-  policy = "ROUND_ROBIN"
+  name             = "backend-api-backendset"
+  policy           = "ROUND_ROBIN"
 
   health_checker {
     protocol          = "HTTP"
