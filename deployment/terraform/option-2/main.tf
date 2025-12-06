@@ -6,9 +6,6 @@ provider "oci" {
   region = var.region
 }
 
-data "oci_identity_availability_domains" "ads" {
-  compartment_id = var.compartment_id
-}
 
 locals {
   common_tags = merge(var.tags, {
@@ -201,7 +198,7 @@ resource "oci_core_subnet" "private_subnet" {
 
 resource "oci_core_instance" "bharatmart_frontend" {
   count               = var.frontend_instance_count
-  availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
+  availability_domain = var.availability_domain
   compartment_id      = var.compartment_id
   display_name        = "${var.project_name}-${var.environment}-frontend-${count.index + 1}"
   shape               = var.frontend_instance_shape
@@ -246,7 +243,7 @@ EOF
 
 resource "oci_core_instance" "bharatmart_backend" {
   count               = var.compute_instance_count
-  availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
+  availability_domain = var.availability_domain
   compartment_id      = var.compartment_id
   display_name        = "${var.project_name}-${var.environment}-backend-${count.index + 1}"
   shape               = var.compute_instance_shape

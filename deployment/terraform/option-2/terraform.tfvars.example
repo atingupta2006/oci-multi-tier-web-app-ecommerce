@@ -62,3 +62,5 @@ tags = {
   "Environment" = "dev"
   "Team"        = "SRE"
 }
+
+tenancy_id = "ocid1.tenancy.oc1..aaaaaaaaqh5uemzgiwvqvikjxlxl6h5mdncebvlmbb7prcrcgglnbdsr5dqa"

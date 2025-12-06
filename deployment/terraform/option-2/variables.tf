@@ -162,3 +162,8 @@ variable "compute_instance_memory_in_gb" {
   type        = number
   default     = 12
 }
+
+variable "tenancy_id" {
+  description = "Tenancy OCID required to fetch Availability Domains"
+  type        = string
+}
