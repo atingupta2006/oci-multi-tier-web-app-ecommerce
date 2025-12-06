@@ -97,21 +97,30 @@ resource "oci_core_security_list" "public_security_list" {
     protocol    = "6"
     source      = "0.0.0.0/0"
     description = "Allow HTTP"
-    tcp_options { min = 80 max = 80 }
+    tcp_options {
+      min = 80
+      max = 80
+    }
   }
 
   ingress_security_rules {
     protocol    = "6"
     source      = "0.0.0.0/0"
     description = "Allow HTTPS"
-    tcp_options { min = 443 max = 443 }
+    tcp_options { 
+      min = 443
+      max = 443
+    }
   }
 
   ingress_security_rules {
     protocol    = "6"
     source      = "0.0.0.0/0"
     description = "Allow SSH (dev only)"
-    tcp_options { min = 22 max = 22 }
+    tcp_options { 
+      min = 22
+      max = 22 
+    }
   }
 
   egress_security_rules {
@@ -132,14 +141,20 @@ resource "oci_core_security_list" "private_security_list" {
     protocol    = "6"
     source      = var.public_subnet_cidr
     description = "LB → Backend API"
-    tcp_options { min = 3000 max = 3000 }
+    tcp_options {
+      min = 3000
+      max = 3000
+    }
   }
 
   ingress_security_rules {
     protocol    = "6"
     source      = var.vcn_cidr
     description = "SSH from VCN"
-    tcp_options { min = 22 max = 22 }
+    tcp_options {
+      min = 22
+      max = 22
+    }
   }
 
   egress_security_rules {
@@ -308,8 +323,7 @@ resource "oci_load_balancer_backend_set" "frontend_set" {
 }
 
 resource "oci_load_balancer_backend_set" "backend_set" {
-  load_balancer_id =
-    oci_load_balancer_load_balancer.bharatmart_lb.id
+  load_balancer_id = oci_load_balancer_load_balancer.bharatmart_lb.id
   name   = "backend-api-backendset"
   policy = "ROUND_ROBIN"
 
