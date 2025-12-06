@@ -37,8 +37,8 @@ EOF
 # Copy contents from: supabase/migrations/*.sql
 
 # Start development servers
-npm run dev              # Terminal 1 - Frontend (http://localhost:5173)
-npm run dev:server       # Terminal 2 - Backend (http://localhost:3000)
+npm run dev -- --host 0.0.0.0 --port 5173              # Terminal 1 - Frontend (http://localhost:5173)
+npm run dev:server                                     # Terminal 2 - Backend (http://localhost:3000)
 ```
 
 **Done!** Visit http://localhost:5173

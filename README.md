@@ -29,6 +29,7 @@ BharatMart is a comprehensive e-commerce platform designed specifically for Site
 # Clone repository
 git clone <repository-url>
 cd oci-multi-tier-web-app-ecommerce
+git checkout <branch-name>
 
 # Install dependencies
 npm install
@@ -37,12 +38,9 @@ npm install
 cp .env.example .env
 # Edit .env with your Supabase credentials
 
-# Initialize database
-npm run db:init
-
 # Start development servers
-npm run dev:server  # Terminal 1 - Backend
-npm run dev         # Terminal 2 - Frontend
+npm run dev:server                                # Terminal 1 - Backend
+npm run dev -- --host 0.0.0.0 --port 5173         # Terminal 2 - Frontend
 ```
 
 **Access:**
@@ -243,9 +241,9 @@ Complete documentation is available in the `docs/` directory:
 
 ```bash
 # Development
-npm run dev              # Start frontend dev server
-npm run dev:server       # Start backend dev server
-npm run dev:worker       # Start worker dev server
+npm run dev -- --host 0.0.0.0 --port 5173               # Start frontend dev server
+npm run dev:server                                      # Start backend dev server
+npm run dev:worker                                      # Start worker dev server
 
 # Building
 npm run build            # Build both frontend and backend

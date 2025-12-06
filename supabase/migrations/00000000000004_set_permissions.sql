@@ -1,4 +1,5 @@
 -- =====================================================
+-- Need to run manually to set appropriate RLS policies
 -- 1. REQUIRED FUNCTIONS (BACKEND ONLY)
 -- =====================================================
 

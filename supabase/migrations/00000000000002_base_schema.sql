@@ -1,4 +1,5 @@
 -- ==========================================================
+-- Will run automatically using npm run db:init
 -- FINAL CANONICAL BASE SCHEMA FOR BHARATMART (DEV SAFE)
 -- ==========================================================
 

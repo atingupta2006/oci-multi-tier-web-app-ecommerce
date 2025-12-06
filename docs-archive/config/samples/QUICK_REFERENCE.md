@@ -7,7 +7,7 @@
 ### I'm Just Starting (Learning/Development)
 ```bash
 cp config/samples/local-dev-minimal.env .env
-npm install && npm run dev
+npm install && npm run dev -- --host 0.0.0.0 --port 5173
 ```
 **Features:** Supabase, managed PostgreSQL, free tier
 **Time:** 1 minute | **Cost:** $0
@@ -18,7 +18,7 @@ npm install && npm run dev
 ```bash
 cp config/samples/local-dev-full.env .env
 # Install: PostgreSQL + Redis
-npm install && npm run migrate && npm run dev
+npm install && npm run migrate && npm run dev -- --host 0.0.0.0 --port 5173
 ```
 **Features:** Local PostgreSQL, Redis queues
 **Time:** 10 minutes | **Cost:** $0

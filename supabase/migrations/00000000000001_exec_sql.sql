@@ -1,3 +1,5 @@
+-- Need to run manually via Supabase SQL Editor because Supabase CLI does not support SECURITY DEFINER functions
+
 CREATE OR REPLACE FUNCTION public.exec_sql(sql text)
 RETURNS void
 LANGUAGE plpgsql

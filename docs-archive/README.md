@@ -308,7 +308,7 @@ cp prd.env .env
 # 3-1 Reset and Start Front End app
 ```
 npm run db:reset
-npm run dev  -- --host 0.0.0.0         # Terminal 1: Frontend (http://localhost:5173)
+npm run dev -- --host 0.0.0.0 --port 5173         # Terminal 1: Frontend (http://localhost:5173)
 ```
 
 - Run scripts in the file - supabase\migrations\00000000000004_set_permissions.sql

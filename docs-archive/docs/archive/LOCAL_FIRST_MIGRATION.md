@@ -429,8 +429,8 @@ npm install
 # Or manually: npm run migrate
 
 # 4. Start app
-npm run dev              # Frontend
-npm run dev:server       # Backend
+npm run dev -- --host 0.0.0.0 --port 5173               # Frontend
+npm run dev:server                                      # Backend
 
 # 5. Create admin user
 npm run create-admin -- --email admin@example.com --password admin123

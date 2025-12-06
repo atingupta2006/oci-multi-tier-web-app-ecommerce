@@ -261,7 +261,7 @@ curl http://localhost:3000/api/health
 VITE_API_URL=http://localhost:3000
 
 # Restart frontend
-# Ctrl+C and npm run dev
+# Ctrl+C and npm run dev -- --host 0.0.0.0 --port 5173
 
 # Check CORS (if using different ports)
 # Backend should allow frontend origin
@@ -283,7 +283,7 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
 
 # Restart dev server (env changes require restart)
-# Ctrl+C and npm run dev
+# Ctrl+C and npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
 ---
@@ -305,7 +305,7 @@ rm -rf dist
 npm run build
 
 # If in development:
-# Ctrl+C and npm run dev
+# Ctrl+C and npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
 ---

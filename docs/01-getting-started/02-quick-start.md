@@ -44,12 +44,12 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 Run database migrations in order:
 
-1. **Destroy existing schema** (if needed):
+1. **Manual Destroy existing schema** (if needed):
    ```bash
    # Run: supabase/migrations/00000000000000_destroy-db.sql
    ```
 
-2. **Execute SQL setup**:
+2. **Manual Execute SQL setup**:
    ```bash
    # Run: supabase/migrations/00000000000001_exec_sql.sql
    ```
@@ -57,15 +57,15 @@ Run database migrations in order:
 3. **Create base schema**:
    ```bash
    npm run db:init
-   # Executes: supabase/migrations/00000000000002_base_schema.sql
+   # Auto Executes: supabase/migrations/00000000000002_base_schema.sql
    ```
 
-4. **Seed data**:
+4. **Manual Seed data**:
    ```bash
    # Run: supabase/migrations/00000000000003_seed.sql
    ```
 
-5. **Set permissions**:
+5. **Manual Set permissions**:
    ```bash
    # Run: supabase/migrations/00000000000004_set_permissions.sql
    ```
@@ -75,7 +75,7 @@ Run database migrations in order:
 ### Step 4: Start Frontend
 
 ```bash
-npm run dev -- --host 0.0.0.0
+npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
 Frontend runs on: `http://localhost:5173`

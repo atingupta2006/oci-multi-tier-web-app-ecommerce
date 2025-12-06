@@ -533,8 +533,8 @@ CACHE_TYPE=memory
 **Run:**
 ```bash
 npm install
-npm run dev        # Frontend
-npm run dev:server # Backend (database auto-creates!)
+npm run dev -- --host 0.0.0.0 --port 5173        # Frontend
+npm run dev:server                               # Backend (database auto-creates!)
 ```
 
 **That's it! No Supabase, no Redis, no external services!**

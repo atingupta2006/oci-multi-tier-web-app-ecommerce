@@ -1,9 +1,9 @@
 -- ================================
+--- Need to run manually to seed initial data
 -- USERS
 -- ================================
 INSERT INTO public.users (id, email, full_name, role)
 VALUES
-('aaaaaaaa-1111-1111-1111-111111111111', 'admin@bharatmart.com', 'Admin User', 'admin'),
 ('bbbbbbbb-2222-2222-2222-222222222222', 'rajesh@example.com', 'Rajesh Kumar', 'customer'),
 ('cccccccc-3333-3333-3333-333333333333', 'priya@example.com', 'Priya Sharma', 'customer');
 

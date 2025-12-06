@@ -1,4 +1,5 @@
 -- ============================================================
+-- Need to run manually via Supabase SQL Editor to destroy all data
 -- 0. DELETE ALL SUPABASE AUTH USERS (INCLUDING ADMIN)
 -- ============================================================
 -- This clears the "Users" screen shown in your screenshot

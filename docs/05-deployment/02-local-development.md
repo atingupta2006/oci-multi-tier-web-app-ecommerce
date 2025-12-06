@@ -70,7 +70,7 @@ npm run dev:server
 
 **Terminal 2 - Frontend:**
 ```bash
-npm run dev
+npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
 **Source:** Development scripts in `package.json` lines 7, 10.
