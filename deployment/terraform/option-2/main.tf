@@ -1,10 +1,6 @@
 ############################################
-# PROVIDER & DATA SOURCES
+# DATA SOURCES
 ############################################
-
-provider "oci" {
-  region = var.region
-}
 
 # Availability Domains (correct data sources)
 data "oci_identity_availability_domains" "ads" {
