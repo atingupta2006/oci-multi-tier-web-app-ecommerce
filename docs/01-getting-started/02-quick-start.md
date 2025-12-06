@@ -38,6 +38,10 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
+Also change:
+ - FRONTEND_URL
+ - CORS_ORIGIN
+
 **Source:** Environment variables are loaded from `.env` file via `dotenv` in `server/index.ts` and `server/config/supabase.ts`.
 
 ### Step 3: Initialize Database

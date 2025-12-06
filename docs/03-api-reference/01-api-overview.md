@@ -155,9 +155,9 @@ CORS is configured to allow requests from:
 
 - `FRONTEND_URL` environment variable
 - `http://localhost:5173` (default Vite dev server)
-- `http://127.0.0.1:5173`
+- `http://40.81.230.114:5173`
 - `http://localhost:3000`
-- `http://127.0.0.1:3000`
+- `http://40.81.230.114:3000`
 
 **Source:** CORS configuration in `server/app.ts` lines 22-31.
 
