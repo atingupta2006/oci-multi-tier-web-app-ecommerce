@@ -12,6 +12,7 @@ import { register } from './config/metrics';
 import { logger } from './config/logger';
 import authRoutes from './routes/auth';
 import healthRoutes from './routes/health';
+import systemRoutes from './routes/system';
 import productsRoutes from './routes/products';
 import ordersRoutes from './routes/orders';
 import paymentsRoutes from './routes/payments';
@@ -43,6 +44,7 @@ app.get('/metrics', async (_req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api', healthRoutes);
+app.use('/api', systemRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/payments', paymentsRoutes);
@@ -56,6 +58,7 @@ app.get('/', (_req, res) => {
       auth: '/api/auth',
       health: '/api/health',
       ready: '/api/health/ready',
+      systemInfo: '/api/system/info',
       products: '/api/products',
       orders: '/api/orders',
       payments: '/api/payments',

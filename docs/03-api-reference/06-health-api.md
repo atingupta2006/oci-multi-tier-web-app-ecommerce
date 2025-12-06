@@ -34,19 +34,23 @@ GET /api/health
 }
 ```
 
+**Fields:**
+- `ok`: Boolean indicating overall health status (true = healthy, false = unhealthy)
+- `count`: Number of records returned from database query (1 if healthy)
+
+**Note:** This endpoint returns minimal health information for basic health checks and load balancer probes. For comprehensive system information including detailed service health, deployment details, and configuration, use the [`/api/system/info`](08-system-api.md) endpoint.
+
 **Status:** `500 Internal Server Error` (unhealthy)
 
 **Body:**
 ```json
 {
   "ok": false,
-  "error": "Error message",
-  "code": "ERROR_CODE",
-  "details": {...}
+  "count": 0
 }
 ```
 
-**Source:** Response format in `server/routes/health.ts` lines 28-31, 19-24.
+**Source:** Response format in `server/routes/health.ts` lines 28-38, 19-28.
 
 ### Implementation
 
@@ -89,7 +93,10 @@ GET /api/health/ready
   "status": "ready",
   "timestamp": "2024-12-19T10:00:00.000Z",
   "checks": {
-    "database": "ok",
+    "database": {
+      "status": "ok",
+      "responseTimeMs": 45
+    },
     "service": "ok"
   }
 }
@@ -103,13 +110,16 @@ GET /api/health/ready
   "status": "not ready",
   "timestamp": "2024-12-19T10:00:00.000Z",
   "checks": {
-    "database": "failed",
+    "database": {
+      "status": "failed",
+      "error": "Connection timeout"
+    },
     "service": "ok"
   }
 }
 ```
 
-**Source:** Response format in `server/routes/health.ts` lines 50-57, 59-66.
+**Source:** Response format in `server/routes/health.ts` lines 50-57, 59-67.
 
 ### Implementation
 

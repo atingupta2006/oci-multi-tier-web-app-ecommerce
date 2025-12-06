@@ -4,23 +4,26 @@ import { supabase } from '../config/supabase';
 const router = Router();
 
 // GET /api/health
-// GET /api/health
+// Health check endpoint (liveness probe)
+// Returns basic health status with database connectivity check
 router.get('/health', async (_req, res) => {
   try {
+    const startTime = Date.now();
+    
     // ✅ Directly run the actual health check query (no debug RPC)
     const { data, error } = await supabase
       .from('products')
       .select('id')
       .limit(1);
 
+    const responseTime = Date.now() - startTime;
+
     if (error) {
       console.error('❌ Health check products query failed:', error);
 
       return res.status(500).json({
         ok: false,
-        error: error.message,
-        code: error.code,
-        details: error
+        count: 0
       });
     }
 
@@ -35,7 +38,7 @@ router.get('/health', async (_req, res) => {
 
     return res.status(500).json({
       ok: false,
-      error: (err as Error).message || 'Unexpected error'
+      count: 0
     });
   }
 });
@@ -43,7 +46,9 @@ router.get('/health', async (_req, res) => {
 
 router.get('/health/ready', async (req: Request, res: Response) => {
   try {
-    const { error } = await supabase.from('products').select('id').limit(1);
+    const startTime = Date.now();
+    const { data, error } = await supabase.from('products').select('id').limit(1);
+    const responseTime = Date.now() - startTime;
 
     if (error) throw error;
 
@@ -51,7 +56,10 @@ router.get('/health/ready', async (req: Request, res: Response) => {
       status: 'ready',
       timestamp: new Date().toISOString(),
       checks: {
-        database: 'ok',
+        database: {
+          status: 'ok',
+          responseTimeMs: responseTime
+        },
         service: 'ok',
       },
     });
@@ -60,7 +68,10 @@ router.get('/health/ready', async (req: Request, res: Response) => {
       status: 'not ready',
       timestamp: new Date().toISOString(),
       checks: {
-        database: 'failed',
+        database: {
+          status: 'failed',
+          error: (error as Error).message
+        },
         service: 'ok',
       },
     });

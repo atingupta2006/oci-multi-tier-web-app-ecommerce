@@ -116,9 +116,10 @@ All errors follow this structure:
 
 - `GET /api/health` - Health check (liveness probe)
 - `GET /api/health/ready` - Readiness probe
+- `GET /api/system/info` - Comprehensive system information
 - `GET /metrics` - Prometheus metrics
 
-**Source:** Health routes in `server/routes/health.ts`. Metrics endpoint in `server/app.ts` line 39.
+**Source:** Health routes in `server/routes/health.ts`. System info route in `server/routes/system.ts`. Metrics endpoint in `server/app.ts` line 39.
 
 ### Products
 
@@ -189,4 +190,5 @@ All API requests are automatically instrumented with Prometheus metrics:
 - [Payments API](05-payments-api.md) - Complete Payments API reference
 - [Health API](06-health-api.md) - Health check endpoints
 - [Metrics API](07-metrics-api.md) - Prometheus metrics endpoint
+- [System API](08-system-api.md) - System information endpoint
 
