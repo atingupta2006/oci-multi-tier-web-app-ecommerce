@@ -6,7 +6,7 @@ variable "compartment_id" {
 variable "region" {
   description = "OCI region for deployment"
   type        = string
-  default     = "us-ashburn-1"
+  default     = "ap-mumbai-1"
 }
 
 variable "availability_domain" {
@@ -48,7 +48,7 @@ variable "private_subnet_cidr" {
 variable "compute_instance_shape" {
   description = "Shape for Compute instances"
   type        = string
-  default     = "VM.Standard.E2.1.Micro"
+  default     = "VM.Standard.A1.Flex"
 }
 
 variable "compute_instance_count" {

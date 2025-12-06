@@ -7,14 +7,14 @@ image_id       = "ocid1.image.oc1.iad.aaaaaaaa..."
 ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ..."
 
 # Optional Variables (with defaults)
-region                  = "us-ashburn-1"
+region                  = "ap-mumbai-1"
 availability_domain     = "AD-1"
 project_name            = "bharatmart"
 environment             = "dev"
 vcn_cidr                = "10.0.0.0/16"
 public_subnet_cidr      = "10.0.1.0/24"
 private_subnet_cidr     = "10.0.2.0/24"
-compute_instance_shape  = "VM.Standard.E2.1.Micro"
+compute_instance_shape  = "VM.Standard.A1.Flex"
 compute_instance_count  = 1
 load_balancer_shape     = "flexible"
 load_balancer_shape_min_mbps = 10

@@ -42,7 +42,7 @@ Returns comprehensive system information including:
     "mode": "single-vm",
     "host": "0.0.0.0",
     "port": 3000,
-    "region": "us-ashburn-1",
+    "region": "ap-mumbai-1",
     "compartment": "ocid1.compartment...."
   },
   "features": {

@@ -30,7 +30,7 @@ output "load_balancer_ip_address" {
 
 output "load_balancer_hostname" {
   description = "Hostname of the Load Balancer"
-  value       = oci_load_balancer_load_balancer.bharatmart_lb.ip_address_details[0].hostname
+  value = oci_load_balancer_load_balancer.bharatmart_lb.ip_address_details[0].ip_address
 }
 
 output "compute_instance_ids" {
@@ -55,6 +55,10 @@ output "nat_gateway_id" {
 
 output "load_balancer_url" {
   description = "URL to access the application via Load Balancer"
-  value       = "http://${oci_load_balancer_load_balancer.bharatmart_lb.ip_address_details[0].hostname}"
+  value = "http://${oci_load_balancer_load_balancer.bharatmart_lb.ip_address_details[0].ip_address}"
 }
 
+output "compute_instance_public_ip" {
+  description = "Public IP of backend instance"
+  value       = oci_core_instance.bharatmart_backend[0].public_ip
+}

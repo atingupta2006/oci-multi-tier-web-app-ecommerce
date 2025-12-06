@@ -96,11 +96,11 @@ deployment/terraform/
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `region` | `us-ashburn-1` | OCI region |
+| `region` | `ap-mumbai-1` | OCI region |
 | `project_name` | `bharatmart` | Project name for resource naming |
 | `environment` | `dev` | Environment (dev/staging/prod) |
 | `compute_instance_count` | `1` | Number of backend instances |
-| `compute_instance_shape` | `VM.Standard.E2.1.Micro` | Compute instance shape |
+| `compute_instance_shape` | `VM.Standard.A1.Flex` | Compute instance shape |
 | `load_balancer_shape` | `flexible` | Load Balancer shape |
 | `enable_nat_gateway` | `true` | Enable NAT Gateway for private subnet |
 
@@ -244,7 +244,7 @@ deployment/terraform/
 
 ## Cost Optimization
 
-- Use `VM.Standard.E2.1.Micro` shape for development/testing
+- Use `VM.Standard.A1.Flex` shape for development/testing
 - Use flexible Load Balancer with minimum bandwidth for cost savings
 - Disable NAT Gateway if outbound internet is not needed
 - Use single Availability Domain for minimal deployment

@@ -16,6 +16,8 @@ locals {
   })
 }
 
+
+
 # Create VCN
 resource "oci_core_vcn" "bharatmart_vcn" {
   compartment_id = var.compartment_id
@@ -149,6 +151,19 @@ resource "oci_core_security_list" "public_security_list" {
     destination_type = "CIDR_BLOCK"
     description      = "Allow all outbound traffic"
   }
+  
+  ingress_security_rules {
+    description = "Allow SSH from anywhere (dev only)"
+    protocol    = "6"
+    source      = "0.0.0.0/0"
+    source_type = "CIDR_BLOCK"
+
+    tcp_options {
+      min = 22
+      max = 22
+    }
+  }
+
 
   freeform_tags = local.common_tags
 }
@@ -205,9 +220,16 @@ resource "oci_core_instance" "bharatmart_backend" {
   display_name        = "${var.project_name}-${var.environment}-backend-${count.index + 1}"
   shape               = var.compute_instance_shape
 
+  shape_config {
+    ocpus = 2
+    memory_in_gbs = 12
+  }
+
+
   create_vnic_details {
-    subnet_id              = oci_core_subnet.private_subnet.id
-    assign_public_ip       = false
+    subnet_id              = oci_core_subnet.public_subnet.id
+    assign_public_ip       = true
+    hostname_label   = "backend"
     skip_source_dest_check = false
   }
 
