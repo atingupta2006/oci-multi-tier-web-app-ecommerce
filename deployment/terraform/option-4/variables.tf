@@ -197,6 +197,106 @@ variable "load_balancer_shape_max_mbps" {
 }
 
 ############################################
+# APPLICATION DEPLOYMENT CONFIGURATION
+############################################
+
+variable "enable_auto_deployment" {
+  description = "Enable automatic application deployment via Terraform provisioners"
+  type        = bool
+  default     = true
+}
+
+variable "repository_url" {
+  description = "GitHub repository URL for BharatMart"
+  type        = string
+  default     = "https://github.com/atingupta2006/oci-multi-tier-web-app-ecommerce.git"
+}
+
+variable "repository_branch" {
+  description = "Git branch to deploy"
+  type        = string
+  default     = "main"
+}
+
+variable "backend_app_directory" {
+  description = "Directory path for backend application on the VM"
+  type        = string
+  default     = "/opt/bharatmart-backend"
+}
+
+variable "frontend_app_directory" {
+  description = "Directory path for frontend application on the VM"
+  type        = string
+  default     = "/opt/bharatmart-frontend"
+}
+
+variable "use_pm2" {
+  description = "Use PM2 for process management (true) or systemd (false)"
+  type        = bool
+  default     = true
+}
+
+############################################
+# APPLICATION ENVIRONMENT VARIABLES
+############################################
+
+variable "supabase_url" {
+  description = "Supabase project URL"
+  type        = string
+  default     = ""
+}
+
+variable "supabase_anon_key" {
+  description = "Supabase anonymous key"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "supabase_service_role_key" {
+  description = "Supabase service role key"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "jwt_secret" {
+  description = "JWT secret for authentication (minimum 32 characters)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "admin_email" {
+  description = "Admin user email for database initialization"
+  type        = string
+  default     = "admin@bharatmart.com"
+}
+
+variable "admin_password" {
+  description = "Admin user password for database initialization"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+############################################
+# SSH CONFIGURATION FOR PROVISIONERS
+############################################
+
+variable "ssh_private_key_path" {
+  description = "Path to SSH private key for Terraform provisioner connection"
+  type        = string
+  default     = "~/.ssh/id_rsa"
+}
+
+variable "ssh_user" {
+  description = "SSH user for Terraform provisioner connection"
+  type        = string
+  default     = "opc"
+}
+
+############################################
 # TAGS
 ############################################
 

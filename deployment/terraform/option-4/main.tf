@@ -17,6 +17,30 @@ locals {
     "Name"        = "${var.project_name}-${var.environment}"
     "Environment" = var.environment
   })
+
+  # Get Load Balancer IP (will be available when LB is created)
+  lb_public_ip = try(
+    oci_load_balancer_load_balancer.bharatmart_lb.ip_address_details[0].ip_address,
+    ""
+  )
+
+  # Generate backend .env file content using template
+  backend_env_content = var.enable_auto_deployment ? templatefile("${path.module}/scripts/templates/backend.env.template", {
+    SUPABASE_URL              = var.supabase_url
+    SUPABASE_ANON_KEY        = var.supabase_anon_key
+    SUPABASE_SERVICE_ROLE_KEY = var.supabase_service_role_key
+    FRONTEND_URL             = local.lb_public_ip != "" ? "http://${local.lb_public_ip}" : "http://LOAD_BALANCER_IP_PLACEHOLDER"
+    JWT_SECRET               = var.jwt_secret
+    ADMIN_EMAIL              = var.admin_email
+    ADMIN_PASSWORD           = var.admin_password
+  }) : ""
+
+  # Generate frontend .env file content using template
+  frontend_env_content = var.enable_auto_deployment ? templatefile("${path.module}/scripts/templates/frontend.env.template", {
+    VITE_API_URL            = local.lb_public_ip != "" ? "http://${local.lb_public_ip}:3000" : "http://LOAD_BALANCER_IP_PLACEHOLDER:3000"
+    VITE_SUPABASE_URL       = var.supabase_url
+    VITE_SUPABASE_ANON_KEY  = var.supabase_anon_key
+  }) : ""
 }
 
 ############################################
@@ -237,26 +261,11 @@ resource "oci_core_instance" "bharatmart_frontend" {
 
   metadata = {
     ssh_authorized_keys = var.ssh_public_key
+    # Minimal user_data - full deployment will be done by provisioners
     user_data = base64encode(<<EOF
 #!/bin/bash
-# Update system
+# Initial system setup - provisioners will handle full deployment
 yum update -y
-
-# Install Node.js 20 and Git
-curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
-yum install -y nodejs git
-
-# Clone BharatMart repo
-cd /home/opc
-git clone https://github.com/atingupta2006/oci-multi-tier-web-app-ecommerce.git
-cd oci-multi-tier-web-app-ecommerce
-
-# Install dependencies
-npm install
-
-# OPTIONAL: build production frontend (you will manually configure env later)
-# npm run build
-
 EOF
     )
   }
@@ -264,6 +273,62 @@ EOF
   freeform_tags = merge(local.common_tags, {
     "Role" = "frontend"
   })
+
+  # Add provisioners for complete application deployment
+  dynamic "provisioner" {
+    for_each = var.enable_auto_deployment ? [1] : []
+    content {
+      type = "file"
+      source      = "${path.module}/scripts/deploy-frontend.sh"
+      destination = "/tmp/deploy-frontend.sh"
+
+      connection {
+        type        = "ssh"
+        user        = var.ssh_user
+        private_key = file(var.ssh_private_key_path)
+        host        = self.public_ip
+      }
+    }
+  }
+
+  dynamic "provisioner" {
+    for_each = var.enable_auto_deployment ? [1] : []
+    content {
+      type = "file"
+      content     = local.frontend_env_content
+      destination = "/tmp/frontend.env"
+
+      connection {
+        type        = "ssh"
+        user        = var.ssh_user
+        private_key = file(var.ssh_private_key_path)
+        host        = self.public_ip
+      }
+    }
+  }
+
+  dynamic "provisioner" {
+    for_each = var.enable_auto_deployment ? [1] : []
+    content {
+      type = "remote-exec"
+      inline = [
+        "chmod +x /tmp/deploy-frontend.sh",
+        "sudo REPO_URL='${var.repository_url}' REPO_BRANCH='${var.repository_branch}' FRONTEND_APP_DIR='${var.frontend_app_directory}' /tmp/deploy-frontend.sh"
+      ]
+
+      connection {
+        type        = "ssh"
+        user        = var.ssh_user
+        private_key = file(var.ssh_private_key_path)
+        host        = self.public_ip
+      }
+    }
+  }
+
+  # Wait for Load Balancer to be ready before running provisioners
+  depends_on = [
+    oci_load_balancer_load_balancer.bharatmart_lb
+  ]
 }
 
 ############################################
@@ -296,20 +361,11 @@ resource "oci_core_instance" "bharatmart_backend" {
 
   metadata = {
     ssh_authorized_keys = var.ssh_public_key
+    # Minimal user_data - full deployment will be done by provisioners
     user_data = base64encode(<<EOF
 #!/bin/bash
+# Initial system setup - provisioners will handle full deployment
 yum update -y
-curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
-yum install -y nodejs git
-# Clone BharatMart repo
-cd /home/opc
-git clone https://github.com/atingupta2006/oci-multi-tier-web-app-ecommerce.git
-cd oci-multi-tier-web-app-ecommerce
-
-# Install dependencies
-npm install
-
-
 EOF
     )
   }
@@ -317,6 +373,63 @@ EOF
   freeform_tags = merge(local.common_tags, {
     "Role" = "backend"
   })
+
+  # Add provisioners for complete application deployment
+  # Note: Backend instances need public IP or bastion access for provisioners
+  dynamic "provisioner" {
+    for_each = var.enable_auto_deployment ? [1] : []
+    content {
+      type = "file"
+      source      = "${path.module}/scripts/deploy-backend.sh"
+      destination = "/tmp/deploy-backend.sh"
+
+      connection {
+        type        = "ssh"
+        user        = var.ssh_user
+        private_key = file(var.ssh_private_key_path)
+        host        = var.enable_backend_public_ip ? self.public_ip : self.private_ip
+      }
+    }
+  }
+
+  dynamic "provisioner" {
+    for_each = var.enable_auto_deployment ? [1] : []
+    content {
+      type = "file"
+      content     = local.backend_env_content
+      destination = "/tmp/backend.env"
+
+      connection {
+        type        = "ssh"
+        user        = var.ssh_user
+        private_key = file(var.ssh_private_key_path)
+        host        = var.enable_backend_public_ip ? self.public_ip : self.private_ip
+      }
+    }
+  }
+
+  dynamic "provisioner" {
+    for_each = var.enable_auto_deployment ? [1] : []
+    content {
+      type = "remote-exec"
+      inline = [
+        "chmod +x /tmp/deploy-backend.sh",
+        "sudo REPO_URL='${var.repository_url}' REPO_BRANCH='${var.repository_branch}' BACKEND_APP_DIR='${var.backend_app_directory}' USE_PM2='${var.use_pm2}' /tmp/deploy-backend.sh"
+      ]
+
+      connection {
+        type        = "ssh"
+        user        = var.ssh_user
+        private_key = file(var.ssh_private_key_path)
+        host        = var.enable_backend_public_ip ? self.public_ip : self.private_ip
+      }
+    }
+  }
+
+  # Wait for Load Balancer to be ready before running provisioners
+  depends_on = [
+    oci_load_balancer_load_balancer.bharatmart_lb
+  ]
 }
 
 ############################################

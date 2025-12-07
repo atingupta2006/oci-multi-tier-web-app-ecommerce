@@ -84,10 +84,6 @@ resource "oci_core_instance_pool" "bharatmart_backend_pool" {
     content {
       availability_domain = placement_configurations.value.name
       primary_subnet_id   = var.enable_backend_public_ip ? oci_core_subnet.public_subnet.id : oci_core_subnet.private_subnet.id
-
-      primary_vnic_subnets {
-        subnet_id = var.enable_backend_public_ip ? oci_core_subnet.public_subnet.id : oci_core_subnet.private_subnet.id
-      }
     }
   }
 
@@ -101,71 +97,67 @@ resource "oci_core_instance_pool" "bharatmart_backend_pool" {
 ############################################
 
 resource "oci_autoscaling_auto_scaling_configuration" "bharatmart_backend_autoscaling" {
-  count = var.enable_instance_pool && var.enable_auto_scaling ? 1 : 0
+  count = var.enable_instance_pool ? 1 : 0
 
-  compartment_id       = var.compartment_id
-  display_name         = "${var.project_name}-${var.environment}-autoscaling"
+  compartment_id = var.compartment_id
+  display_name   = "${var.project_name}-${var.environment}-backend-autoscaling"
+  is_enabled     = true
+
+  freeform_tags = merge(local.common_tags, {
+    "Role" = "backend-autoscaling"
+  })
+
   auto_scaling_resources {
     id   = oci_core_instance_pool.bharatmart_backend_pool[0].id
-    type = "instance pool"
+    type = "instancePool"  # required exact value
   }
 
   policies {
-    capacity {
-      initial = var.instance_pool_size
-      max     = var.instance_pool_max_size
-      min     = var.instance_pool_min_size
-    }
-
-    display_name = "Scale-out based on CPU utilization"
+    display_name = "CPU-based Autoscaling"
     policy_type  = "threshold"
 
-    rules {
-      display_name = "Scale-out when CPU > ${var.auto_scaling_scale_out_threshold}%"
-      metric {
-        metric_type = "CPU_UTILIZATION"
-        threshold {
-          operator = "GT"
-          value    = var.auto_scaling_scale_out_threshold
-        }
-      }
+    # Make scaling limits match your instance pool
+    capacity {
+      initial = var.instance_pool_size
+      min     = var.instance_pool_min_size
+      max     = var.instance_pool_max_size
+    }
 
+    # SCALE OUT (CPU > 70%)
+    rules {
+      display_name = "Scale-out when CPU > 70%"
       action {
         type  = "CHANGE_COUNT_BY"
         value = 1
       }
-    }
-  }
-
-  policies {
-    capacity {
-      initial = var.instance_pool_size
-      max     = var.instance_pool_max_size
-      min     = var.instance_pool_min_size
-    }
-
-    display_name = "Scale-in based on CPU utilization"
-    policy_type  = "threshold"
-
-    rules {
-      display_name = "Scale-in when CPU < ${var.auto_scaling_scale_in_threshold}%"
       metric {
-        metric_type = "CPU_UTILIZATION"
+        metric_source    = "COMPUTE_AGENT"
+        metric_type      = "CPU_UTILIZATION"
+        pending_duration = "PT3M"
         threshold {
-          operator = "LT"
-          value    = var.auto_scaling_scale_in_threshold
+          operator = "GT"
+          value    = 70
         }
       }
+    }
 
+    # SCALE IN (CPU < 30%)
+    rules {
+      display_name = "Scale-in when CPU < 30%"
       action {
         type  = "CHANGE_COUNT_BY"
         value = -1
       }
+      metric {
+        metric_source    = "COMPUTE_AGENT"
+        metric_type      = "CPU_UTILIZATION"
+        pending_duration = "PT3M"
+        threshold {
+          operator = "LT"
+          value    = 30
+        }
+      }
     }
   }
-
-  is_enabled = true
-
-  freeform_tags = local.common_tags
 }
 
