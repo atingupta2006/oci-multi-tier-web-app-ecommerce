@@ -27,3 +27,25 @@ dist-ssr
 *.db
 *.db-shm
 *.db-wal
+
+# Backup and archive folders
+*-archive/
+backup-*/
+**/backup-*/
+
+# Production/development environment files
+prd.env
+dev.env
+
+# Training and documentation archives
+training-material/
+docs-archive/
+
+# AI-generated summary files
+*_SUMMARY.md
+*_REPORT.md
+*_CHECKLIST.md
+*_STATUS.md
+*_RECOMMENDATIONS.md
+*_SUGGESTIONS.md
+WORK_WITHOUT_*.md
