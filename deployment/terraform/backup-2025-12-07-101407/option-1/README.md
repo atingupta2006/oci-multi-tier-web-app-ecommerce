@@ -1,17 +1,17 @@
-# BharatMart OCI Deployment - Terraform Configuration (Single All-in-One VM)
+# BharatMart OCI Deployment - Terraform Configuration
 
-This directory contains Terraform configuration files for deploying BharatMart infrastructure on Oracle Cloud Infrastructure (OCI) using a **single all-in-one VM** that hosts both frontend and backend services.
+This directory contains Terraform configuration files for deploying BharatMart infrastructure on Oracle Cloud Infrastructure (OCI) using OCI Resource Manager.
 
 ## Overview
 
 This Terraform configuration creates a minimal but complete infrastructure setup for BharatMart:
 
-- **VCN** (Virtual Cloud Network) with public subnet only
+- **VCN** (Virtual Cloud Network) with public and private subnets
 - **Internet Gateway** for public subnet connectivity
-- **Security Lists** with appropriate rules for direct access to the VM
-- **Single Compute Instance** (all-in-one) hosting both frontend and backend API
-
-**Note:** This is a simplified deployment option ideal for development, testing, or training purposes. For production, consider using `option-2` (multi-VM with Load Balancer) or `option-3` (instance pools with auto-scaling).
+- **NAT Gateway** (optional) for private subnet outbound connectivity
+- **Security Lists** with appropriate rules for Load Balancer and Compute instances
+- **Compute Instances** (configurable count) for BharatMart backend API
+- **Load Balancer** with health checks and backend configuration
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ This Terraform configuration creates a minimal but complete infrastructure setup
 ## File Structure
 
 ```
-deployment/terraform/option-1/
+deployment/terraform/
 ├── versions.tf          # Terraform and provider version requirements
 ├── variables.tf         # Input variable definitions
 ├── main.tf              # Main infrastructure resources
@@ -39,15 +39,15 @@ deployment/terraform/option-1/
 
 1. **Create a ZIP file** of the Terraform configuration:
    ```bash
-   cd deployment/terraform/option-1
-   zip -r bharatmart-option1.zip *.tf
+   cd deployment/terraform
+   zip -r bharatmart-terraform.zip *.tf
    ```
 
 2. **Upload to Resource Manager**:
-   - Go to OCI Console → Menu (☰) → Developer Services → Resource Manager → Stacks
+   - Go to OCI Console → Developer Services → Resource Manager → Stacks
    - Click "Create Stack"
    - Choose "My Local Machine"
-   - Upload `bharatmart-option1.zip`
+   - Upload `bharatmart-terraform.zip`
    - Fill in variables (compartment_id, image_id, ssh_public_key, etc.)
    - Review and create stack
 
@@ -64,7 +64,7 @@ deployment/terraform/option-1/
 
 1. **Initialize Terraform**:
    ```bash
-   cd deployment/terraform/option-1
+   cd deployment/terraform
    terraform init
    ```
 
@@ -99,89 +99,72 @@ deployment/terraform/option-1/
 | `region` | `ap-mumbai-1` | OCI region |
 | `project_name` | `bharatmart` | Project name for resource naming |
 | `environment` | `dev` | Environment (dev/staging/prod) |
+| `compute_instance_count` | `1` | Number of backend instances |
 | `compute_instance_shape` | `VM.Standard.A1.Flex` | Compute instance shape |
-| `compute_instance_ocpus` | `2` | Number of OCPUs for the VM |
-| `compute_instance_memory_in_gb` | `12` | Memory in GB for the VM |
-| `public_subnet_cidr` | `10.0.1.0/24` | CIDR block for public subnet |
+| `load_balancer_shape` | `flexible` | Load Balancer shape |
+| `enable_nat_gateway` | `true` | Enable NAT Gateway for private subnet |
 
 ## What Gets Created
 
 ### Networking
 - **VCN** with CIDR block (default: 10.0.0.0/16)
-- **Public Subnet** (default: 10.0.1.0/24) - for all-in-one VM
+- **Public Subnet** (default: 10.0.1.0/24) - for Load Balancer
+- **Private Subnet** (default: 10.0.2.0/24) - for Compute instances
 - **Internet Gateway** - for public subnet
+- **NAT Gateway** - for private subnet outbound access (if enabled)
 
 ### Security
-- **Public Security List** - allows:
-  - HTTP (80) from internet
-  - HTTPS (443) from internet
-  - API (3000) from internet
-  - SSH (22) from internet (dev only)
+- **Public Security List** - allows HTTP (80), HTTPS (443) from internet
+- **Private Security List** - allows API traffic (3000) from Load Balancer, SSH (22) from VCN
 
 ### Compute
-- **Single Compute Instance** (all-in-one) - hosts both frontend and backend
-  - Deployed in public subnet with public IP
+- **Compute Instances** (configurable count) - for BharatMart backend API
+  - Deployed in private subnet
   - Basic Node.js installation via user_data
   - SSH access configured
-  - Direct access to application on port 3000
+
+### Load Balancing
+- **Load Balancer** (public, flexible shape)
+  - Backend Set with health check on `/api/health`
+  - HTTP listener on port 80
+  - Backend servers: Compute instances on port 3000
 
 ## Outputs
 
 After successful deployment, the following outputs are available:
 
 - `vcn_id` - VCN OCID
-- `public_subnet_id` - Public subnet OCID
-- `compute_instance_id` - All-in-one VM OCID
-- `compute_instance_public_ip` - Public IP of the VM
-- `compute_instance_private_ip` - Private IP of the VM
-- `application_url` - Full URL to access application (`http://<public-ip>:3000`)
-- `ssh_command` - SSH command to connect to the instance
+- `load_balancer_ip_address` - Public IP of Load Balancer
+- `load_balancer_hostname` - Hostname of Load Balancer
+- `load_balancer_url` - Full URL to access application
+- `compute_instance_ids` - OCIDs of Compute instances
+- `compute_instance_private_ips` - Private IPs of Compute instances
 
 ## Post-Deployment Steps
 
 After Terraform creates the infrastructure:
 
-1. **SSH to the Compute instance**:
+1. **SSH to Compute instances** (via bastion or VPN):
    ```bash
-   ssh -i ~/.ssh/your_key opc@<public_ip>
+   ssh -i ~/.ssh/your_key opc@<private_ip>
    ```
 
 2. **Deploy BharatMart application**:
    - Install Node.js (already done via user_data)
    - Clone repository
    - Configure environment variables
-   - Start application (both frontend and backend)
+   - Start application
 
-3. **Verify Application**:
+3. **Verify Load Balancer**:
    ```bash
-   curl http://<public_ip>:3000/api/health
+   curl http://<load_balancer_ip>/api/health
    ```
 
-4. **Access Application**:
-   - Open browser to `http://<public_ip>:3000`
-   - API available at `http://<public_ip>:3000/api/*`
-
-## Architecture Differences from Other Options
-
-### Option-1 (This Option)
-- ✅ Single VM for everything
-- ✅ Simple setup
-- ✅ Lower cost
-- ❌ No high availability
-- ❌ No load balancing
-- ❌ Single point of failure
-
-### Option-2 (Multi-VM with Load Balancer)
-- Multiple VMs
-- Load Balancer for high availability
-- Better for production workloads
-
-### Option-3 (Instance Pools with Auto-Scaling)
-- Instance pools for scalability
-- Auto-scaling based on metrics
-- Best for production with variable load
+4. **Configure DNS** (optional):
+   - Point your domain to Load Balancer IP/hostname
 
 ## Version Information
 
 - **Terraform**: >= 1.5.0
 - **OCI Provider**: ~> 5.0
+

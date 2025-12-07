@@ -306,10 +306,9 @@ curl http://<load_balancer_public_ip>:3000/api/health
 * Add **backend-only private LB** (separate project)
 * Add SSL certificates + HTTPS
 * Connect Autonomous DB
+* Add autoscaling & instance pools
 * Use OCI DevOps pipelines
 * Add WAF & path-based routing
-
-**Note:** For instance pools and auto-scaling, see `option-3` deployment option.
 
 ---
 

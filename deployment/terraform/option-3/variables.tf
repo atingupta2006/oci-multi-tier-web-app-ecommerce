@@ -117,6 +117,64 @@ variable "compute_instance_memory_in_gb" {
 }
 
 ############################################
+# INSTANCE POOL & AUTO SCALING (Day 4 Lab 6)
+############################################
+
+variable "enable_instance_pool" {
+  description = "Enable Instance Pool and Auto Scaling (for scalable deployment)"
+  type        = bool
+  default     = true  # Enabled by default for option-3
+}
+
+variable "instance_pool_size" {
+  description = "Initial number of instances in the pool"
+  type        = number
+  default     = 2
+}
+
+variable "instance_pool_min_size" {
+  description = "Minimum number of instances in the pool (for auto-scaling)"
+  type        = number
+  default     = 2
+}
+
+variable "instance_pool_max_size" {
+  description = "Maximum number of instances in the pool (for auto-scaling)"
+  type        = number
+  default     = 10
+}
+
+variable "enable_auto_scaling" {
+  description = "Enable Auto Scaling for instance pool"
+  type        = bool
+  default     = true  # Enabled by default for option-3
+}
+
+variable "auto_scaling_scale_out_threshold" {
+  description = "CPU threshold percentage to scale out (add instances)"
+  type        = number
+  default     = 70
+}
+
+variable "auto_scaling_scale_in_threshold" {
+  description = "CPU threshold percentage to scale in (remove instances)"
+  type        = number
+  default     = 30
+}
+
+variable "auto_scaling_scale_out_duration_minutes" {
+  description = "Duration in minutes CPU must exceed threshold to scale out"
+  type        = number
+  default     = 5
+}
+
+variable "auto_scaling_scale_in_duration_minutes" {
+  description = "Duration in minutes CPU must be below threshold to scale in"
+  type        = number
+  default     = 15
+}
+
+############################################
 # LOAD BALANCER SETTINGS
 ############################################
 

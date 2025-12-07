@@ -34,37 +34,61 @@ variable "vcn_cidr" {
 }
 
 variable "public_subnet_cidr" {
-  description = "CIDR block for public subnet (for all-in-one VM)"
+  description = "CIDR block for public subnet (for Load Balancer)"
   type        = string
   default     = "10.0.1.0/24"
 }
 
+variable "private_subnet_cidr" {
+  description = "CIDR block for private subnet (for Compute instances)"
+  type        = string
+  default     = "10.0.2.0/24"
+}
+
 variable "compute_instance_shape" {
-  description = "Shape for Compute instance"
+  description = "Shape for Compute instances"
   type        = string
   default     = "VM.Standard.A1.Flex"
 }
 
-variable "compute_instance_ocpus" {
-  description = "Number of OCPUs for the Compute instance"
+variable "compute_instance_count" {
+  description = "Number of backend Compute instances to create"
   type        = number
-  default     = 2
-}
-
-variable "compute_instance_memory_in_gb" {
-  description = "Memory in GB for the Compute instance"
-  type        = number
-  default     = 12
+  default     = 1
 }
 
 variable "ssh_public_key" {
-  description = "SSH public key for Compute instance (content, not file path)"
+  description = "SSH public key for Compute instances (content, not file path)"
   type        = string
 }
 
-variable "image_id" {
-  description = "OCI image OCID for Compute instance (Oracle Linux or Ubuntu)"
+variable "load_balancer_shape" {
+  description = "Shape for Load Balancer (Flexible or 100Mbps, 400Mbps, 8000Mbps)"
   type        = string
+  default     = "flexible"
+}
+
+variable "load_balancer_shape_min_mbps" {
+  description = "Minimum bandwidth in Mbps for flexible Load Balancer"
+  type        = number
+  default     = 10
+}
+
+variable "load_balancer_shape_max_mbps" {
+  description = "Maximum bandwidth in Mbps for flexible Load Balancer"
+  type        = number
+  default     = 10
+}
+
+variable "image_id" {
+  description = "OCI image OCID for Compute instances (Oracle Linux or Ubuntu)"
+  type        = string
+}
+
+variable "enable_nat_gateway" {
+  description = "Enable NAT Gateway for private subnet (required if Compute instances need outbound internet)"
+  type        = bool
+  default     = true
 }
 
 variable "tags" {
@@ -76,3 +100,4 @@ variable "tags" {
     "Environment" = "dev"
   }
 }
+
