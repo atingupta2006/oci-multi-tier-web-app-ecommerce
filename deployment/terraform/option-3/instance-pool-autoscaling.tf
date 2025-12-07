@@ -49,7 +49,7 @@ locals {
             fi
           fi
           if [ $i -eq 5 ]; then
-            echo "ERROR: Failed to install Node.js after 5 attempts"
+            echo "Failed to install Node.js after 5 attempts"
             exit 1
           fi
           sleep 5
@@ -58,7 +58,7 @@ locals {
       # Verify Node.js installation
       - |
         if ! command -v node &> /dev/null || ! command -v npm &> /dev/null; then
-          echo "ERROR: Node.js or npm not found after installation"
+          echo "Node.js or npm not found after installation"
           exit 1
         fi
         echo "Node.js version: $(node --version)"
@@ -70,12 +70,18 @@ locals {
       - systemctl stop nftables || true
       - systemctl disable nftables || true
 
+      # Enable IP forwarding
+      - |
+        sysctl -w net.ipv4.ip_forward=1
+        echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+        sysctl -p
+
       # Create directory and clone repo
       - mkdir -p /opt/bharatmart
       - |
         if [ ! -d /opt/bharatmart/.git ]; then
           git clone --branch main --depth 1 ${var.github_repo_url} /opt/bharatmart || {
-            echo "ERROR: Failed to clone repository"
+            echo "Failed to clone repository"
             exit 1
           }
         fi
@@ -87,7 +93,7 @@ locals {
       - |
         cd /opt/bharatmart
         npm install || {
-          echo "ERROR: npm install failed"
+          echo "npm install failed"
           exit 1
         }
 
@@ -95,14 +101,14 @@ locals {
       - |
         cd /opt/bharatmart
         npm run build:server || {
-          echo "ERROR: Server build failed"
+          echo "Server build failed"
           exit 1
         }
 
       # Verify dist/server directory exists
       - |
         if [ ! -f /opt/bharatmart/dist/server/index.js ]; then
-          echo "ERROR: Server build output not found at dist/server/index.js"
+          echo "Server build output not found at dist/server/index.js"
           exit 1
         fi
         echo "Server build completed successfully"
@@ -150,7 +156,7 @@ locals {
         systemctl restart bharatmart-backend
         sleep 3
         if ! systemctl is-active --quiet bharatmart-backend; then
-          echo "ERROR: Backend service failed to start"
+          echo "Backend service failed to start"
           systemctl status bharatmart-backend
           journalctl -u bharatmart-backend -n 50 --no-pager
           exit 1

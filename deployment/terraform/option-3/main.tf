@@ -281,7 +281,7 @@ locals {
             fi
           fi
           if [ $i -eq 5 ]; then
-            echo "ERROR: Failed to install Node.js after 5 attempts"
+            echo "Failed to install Node.js after 5 attempts"
             exit 1
           fi
           sleep 5
@@ -290,7 +290,7 @@ locals {
       # Verify Node.js installation
       - |
         if ! command -v node &> /dev/null || ! command -v npm &> /dev/null; then
-          echo "ERROR: Node.js or npm not found after installation"
+          echo "Node.js or npm not found after installation"
           exit 1
         fi
         echo "Node.js version: $(node --version)"
@@ -308,7 +308,7 @@ locals {
       - |
         if [ ! -d /opt/bharatmart/.git ]; then
           git clone --branch main --depth 1 ${var.github_repo_url} /opt/bharatmart || {
-            echo "ERROR: Failed to clone repository"
+            echo "Failed to clone repository"
             exit 1
           }
         fi
@@ -324,7 +324,7 @@ locals {
       - |
         cd /opt/bharatmart
         su - opc -c "cd /opt/bharatmart && npm install" || {
-          echo "ERROR: npm install failed"
+          echo "npm install failed"
           exit 1
         }
 
@@ -332,14 +332,14 @@ locals {
       - |
         cd /opt/bharatmart
         su - opc -c "cd /opt/bharatmart && npm run build:client" || {
-          echo "ERROR: Frontend build failed"
+          echo "Frontend build failed"
           exit 1
         }
 
       # Verify dist directory exists
       - |
         if [ ! -d /opt/bharatmart/dist ] || [ -z "$(ls -A /opt/bharatmart/dist)" ]; then
-          echo "ERROR: dist directory is empty or missing"
+          echo "dist directory is empty or missing"
           exit 1
         fi
 
@@ -370,11 +370,18 @@ locals {
       # Remove default nginx config
       - rm -f /etc/nginx/conf.d/default.conf || true
 
+      # Enable IP forwarding
+      - |
+        sysctl -w net.ipv4.ip_forward=1
+        echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+        sysctl -p
+
       # Test nginx configuration
-      - nginx -t || {
-        echo "ERROR: Nginx configuration test failed"
-        exit 1
-      }
+      - |
+        nginx -t || {
+          echo "Nginx configuration test failed"
+          exit 1
+        }
 
       # Enable and start nginx
       - systemctl enable nginx
@@ -383,7 +390,7 @@ locals {
       # Verify nginx is running
       - |
         if ! systemctl is-active --quiet nginx; then
-          echo "ERROR: Nginx failed to start"
+          echo "Nginx failed to start"
           systemctl status nginx
           exit 1
         fi
