@@ -217,7 +217,7 @@ resource "oci_core_instance" "bharatmart_frontend" {
   availability_domain = data.oci_identity_availability_domain.primary.name
   compartment_id      = var.compartment_id
   display_name        = "${var.project_name}-${var.environment}-frontend-${count.index + 1}"
-  shape               = var.frontend_instance_shape  # VM.Standard.A1.Flex
+  shape               = var.frontend_instance_shape
 
   shape_config {
     ocpus         = var.compute_instance_ocpus
@@ -239,11 +239,24 @@ resource "oci_core_instance" "bharatmart_frontend" {
     ssh_authorized_keys = var.ssh_public_key
     user_data = base64encode(<<EOF
 #!/bin/bash
+# Update system
 yum update -y
-yum install -y nginx
-echo "<h1>BharatMart Frontend</h1>" > /usr/share/nginx/html/index.html
-systemctl enable nginx
-systemctl start nginx
+
+# Install Node.js 20 and Git
+curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+yum install -y nodejs git
+
+# Clone BharatMart repo
+cd /home/opc
+git clone https://github.com/atingupta2006/oci-multi-tier-web-app-ecommerce.git
+cd oci-multi-tier-web-app-ecommerce
+
+# Install dependencies
+npm install
+
+# OPTIONAL: build production frontend (you will manually configure env later)
+# npm run build
+
 EOF
     )
   }
@@ -262,7 +275,7 @@ resource "oci_core_instance" "bharatmart_backend" {
   availability_domain = data.oci_identity_availability_domain.primary.name
   compartment_id      = var.compartment_id
   display_name        = "${var.project_name}-${var.environment}-backend-${count.index + 1}"
-  shape               = var.compute_instance_shape  # VM.Standard.A1.Flex
+  shape               = var.compute_instance_shape
 
   shape_config {
     ocpus         = var.compute_instance_ocpus
@@ -286,7 +299,16 @@ resource "oci_core_instance" "bharatmart_backend" {
 #!/bin/bash
 yum update -y
 curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
-yum install -y nodejs
+yum install -y nodejs git
+# Clone BharatMart repo
+cd /home/opc
+git clone https://github.com/atingupta2006/oci-multi-tier-web-app-ecommerce.git
+cd oci-multi-tier-web-app-ecommerce
+
+# Install dependencies
+npm install
+
+
 EOF
     )
   }
