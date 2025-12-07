@@ -97,6 +97,17 @@ resource "oci_core_security_list" "public_security_list" {
 
   ingress_security_rules {
     protocol    = "6"
+    source      = var.vcn_cidr
+    description = "Allow all VCN Traffic to connect to port 3000"
+    tcp_options {
+      min = 3000
+      max = 3000
+    }
+  }
+
+
+  ingress_security_rules {
+    protocol    = "6"
     source      = "0.0.0.0/0"
     description = "Allow HTTP"
     tcp_options {
@@ -208,7 +219,6 @@ resource "oci_core_instance" "bharatmart_frontend" {
   display_name        = "${var.project_name}-${var.environment}-frontend-${count.index + 1}"
   shape               = var.frontend_instance_shape  # VM.Standard.A1.Flex
 
-  # A1 Flex shape config
   shape_config {
     ocpus         = var.compute_instance_ocpus
     memory_in_gbs = var.compute_instance_memory_in_gb
@@ -254,7 +264,6 @@ resource "oci_core_instance" "bharatmart_backend" {
   display_name        = "${var.project_name}-${var.environment}-backend-${count.index + 1}"
   shape               = var.compute_instance_shape  # VM.Standard.A1.Flex
 
-  # A1 Flex shape config
   shape_config {
     ocpus         = var.compute_instance_ocpus
     memory_in_gbs = var.compute_instance_memory_in_gb

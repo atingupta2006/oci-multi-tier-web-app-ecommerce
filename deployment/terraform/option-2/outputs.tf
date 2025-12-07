@@ -117,3 +117,27 @@ output "backend_api_url" {
   description = "Base URL for backend API via Load Balancer"
   value       = "http://${local.lb_public_ips[0]}:3000/api"
 }
+
+############################################
+# Instance Pool Outputs (Day 4 Lab 6)
+############################################
+
+output "instance_pool_id" {
+  description = "OCID of the instance pool (if enabled)"
+  value       = var.enable_instance_pool ? oci_core_instance_pool.bharatmart_backend_pool[0].id : null
+}
+
+output "instance_pool_size" {
+  description = "Current size of the instance pool"
+  value       = var.enable_instance_pool ? oci_core_instance_pool.bharatmart_backend_pool[0].size : null
+}
+
+output "autoscaling_configuration_id" {
+  description = "OCID of the auto-scaling configuration (if enabled)"
+  value       = var.enable_instance_pool && var.enable_auto_scaling ? oci_autoscaling_auto_scaling_configuration.bharatmart_backend_autoscaling[0].id : null
+}
+
+output "instance_configuration_id" {
+  description = "OCID of the instance configuration used by the pool"
+  value       = var.enable_instance_pool ? oci_core_instance_configuration.bharatmart_backend_config[0].id : null
+}
