@@ -97,8 +97,8 @@ resource "oci_core_security_list" "public_security_list" {
 
   ingress_security_rules {
     protocol    = "6"
-    source      = var.vcn_cidr
-    description = "Allow all VCN Traffic to connect to port 3000"
+    source      = "0.0.0.0/0"
+    description = "Allow all Traffic to connect to port 3000"
     tcp_options {
       min = 3000
       max = 3000
