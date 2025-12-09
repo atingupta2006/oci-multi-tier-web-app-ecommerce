@@ -30,10 +30,9 @@ export BACKEND_HIGH_CPU_ALARM="ocid1.alarm.oc1.eu-frankfurt-1.amaaaaaahqssvraaaq
 From `~/.oci/config` and OCI IAM.
 
 ```bash
-export TENANCY_ID=$(awk '/tenancy/ {print $3}' ~/.oci/config)
-export USER_ID=$(awk '/user/ {print $3}' ~/.oci/config)
-export REGION=$(awk '/region/ {print $3}' ~/.oci/config)
-
+export TENANCY_ID=$(grep -E '^tenancy=' ~/.oci/config | cut -d'=' -f2)
+export USER_ID=$(grep -E '^user=' ~/.oci/config | cut -d'=' -f2)
+export REGION=$(grep -E '^region=' ~/.oci/config | cut -d'=' -f2)
 export COMPARTMENT_ID=$(oci iam compartment list --all \
   --query "data[?name=='sre-lab-compartment'].id | [0]" --raw-output)
 ```
@@ -41,9 +40,20 @@ export COMPARTMENT_ID=$(oci iam compartment list --all \
 Confirm:
 
 ```bash
-echo "TENANCY_ID=$TENANCY_ID"; \
-echo "USER_ID=$USER_ID"; \
-echo "REGION=$REGION"; \
+echo "LB_IP=$LB_IP"
+echo "BACKEND_API_URL=$BACKEND_API_URL"
+echo "BACKEND_HEALTH_URL=$BACKEND_HEALTH_URL"
+
+echo "BACKEND_POOL_ID=$BACKEND_POOL_ID"
+echo "NOTIFICATION_TOPIC_ID=$NOTIFICATION_TOPIC_ID"
+echo "LOAD_BALANCER_ID=$LOAD_BALANCER_ID"
+
+echo "BACKEND_HIGH_CPU_ALARM=$BACKEND_HIGH_CPU_ALARM"
+
+# Automatically detected values
+echo "TENANCY_ID=$TENANCY_ID"
+echo "USER_ID=$USER_ID"
+echo "REGION=$REGION"
 echo "COMPARTMENT_ID=$COMPARTMENT_ID"
 ```
 
@@ -101,47 +111,231 @@ Expected:
 * Custom metrics increase (`http_requests_total`)
 
 ---
+Below is a **short, clean, copy-paste-ready add-on** you can insert directly into the document *right after Section 3*.
+It explains **why some logs are not visible**, **what enables them**, and **whether future actions are needed** — without adding unnecessary detail.
+
+---
+
+# **Why Some Logs May Not Be Visible**
+
+Not all log types appear automatically. Each log source has a different enabling mechanism:
+
+### **1. Load Balancer Access Log (Visible immediately)**
+
+Created automatically when Terraform enables:
+
+```
+oci_load_balancer_logging
+```
+
+→ Appears as soon as traffic hits the LB.
+
+### **2. Load Balancer Error Log (May be missing)**
+
+Appears **only if explicitly enabled** in Terraform.
+If missing, check `monitoring-logging.tf` for `"error"` log configuration.
+
+### **3. Backend & Frontend Logs (Unified Agent)**
+
+These logs appear **only when:**
+
+* The **OCI Logging Agent** is installed and running on the VM
+* Log file paths exist (e.g., NGINX logs, application logs)
+* Terraform created logging configurations for them
+
+If Unified Agent logs are missing, no CLI command will make them appear automatically — the agent must:
+
+1. Be running
+2. Have valid config files
+3. Have readable log files
+
+### **4. VCN Flow Logs (Visible immediately)**
+
+Created automatically by Terraform via:
+
+```
+oci_flow_log
+```
+
+→ Updated whenever network traffic flows.
+
+---
+
+# **Will more log types appear later automatically?**
+
+❌ **No.**
+New log types do **not** appear just because traffic changes.
+
+✔ They only appear if Terraform (or manual config) explicitly enables them.
+
+---
+
+# **How to make missing logs appear (Instructor Notes)**
+
+If a log type is missing:
+
+| Missing Log                 | How to Enable It                                            |
+| --------------------------- | ----------------------------------------------------------- |
+| LB Error Log                | Add `error` log block in Terraform → apply                  |
+| Backend App Log             | Ensure Unified Agent config exists + app writes logs        |
+| NGINX Logs                  | Ensure NGINX access/error logs exist + Unified Agent config |
+| Custom logs                 | Add another log source to Unified Agent config              |
+| Flow logs for other subnets | Add `oci_flow_log` resources                                |
+
+No manual commands can “force” these logs to appear.
+They require **Terraform config + working Unified Agent on VMs**.
+
+---
+
+# Short Version (If You Prefer)
+
+```
+Not all logs appear automatically. LB Access/Flow logs are created by Terraform immediately. 
+LB Error logs appear only if explicitly enabled. Backend/Frontend logs depend on the OCI Unified Agent 
+running on the VM and the correct log file paths being present. No future command will make logs appear—
+they only appear when Terraform or Unified Agent configuration enables them.
+```
+
+---
+Below is the **shortest and safest replacement** for Section 3, based ONLY on logs that **Terraform already creates** in your environment.
+This means **NO backend app logs** and **NO frontend NGINX logs**, because your Terraform configuration does *not* currently enable Unified Agent log sources.
+
+This replacement is fully aligned with your actual deployment and avoids mentioning logs that will never appear.
+
+---
 
 # **3. Logging Verification (OCI Console)**
 
-Navigate to **Observability & Management → Logging → Log Groups**.
-Confirm logs exist for:
+Navigate to **Observability & Management → Logging → Log Groups** and verify the logs that Terraform creates by default in this environment.
 
-* Load Balancer access/error logs
-* Backend application log
-* Frontend NGINX access/error logs
-* VCN flow logs
+### **Expected Logs (Based on Current Terraform Configuration)**
 
-Optional CLI:
+#### ✔ **1. Load Balancer Access Log**
 
-```bash
-oci logging log list --compartment-id $COMPARTMENT_ID --all
-```
+* **Type:** `ACCESS`
+* **Service:** `loadbalancer`
+* Appears immediately when traffic is sent to the LB.
+
+#### ✔ **2. VCN Flow Logs**
+
+Terraform creates one flow log per subnet.
+
+* **Type:** `FLOW`
+* **Service:** `vcn.flowlogs`
+* Shows ACCEPT/DROP network events.
+
+### **Why Other Logs Do Not Appear**
+
+Backend application logs and NGINX logs are **not configured in the current Terraform script**, so they will **not** appear in OCI Logging.
+No command can make them appear unless logging is explicitly configured for those VM log files.
 
 ---
 
 # **4. Native Metrics Verification (OCI Console)**
 
-Open **Metrics Explorer**.
-Check namespaces:
+Open **Observability & Management → Metrics Explorer** and verify metrics from the following namespaces:
 
-* `oci_computeagent`
-* `oci_loadbalancer`
-* `oci_vcn`
+### **Namespaces to Check**
 
-Filter by LB resource ID:
-
-```
-resourceId = <LOAD_BALANCER_ID>
-```
-
-Look for:
-
-* RequestCount
-* Latency metrics
-* BackendResponseTime
+* `oci_lbaas` (Load Balancer)
+* `oci_computeagent` (Compute Instances)
+* `oci_vcn` (VCN Metrics)
 
 ---
+
+## **4.1 Load Balancer Metrics (oci_lbaas)**
+
+**Namespace:**
+
+```
+oci_lbaas
+```
+
+**Filter:**
+
+```
+resourceId = "<LOAD_BALANCER_ID>"
+```
+
+**Key metrics to verify:**
+
+* `HttpRequests` — Number of HTTP requests handled
+* `HandledConnections` — Successful TCP connections
+* `ClosedConnections` — Closed TCP connections
+* `BytesReceived` — Client → LB bytes
+* `BytesSent` — LB → Client bytes
+* `BackendTimeouts` — Requests timed out waiting for backend
+* `FailedSSLHandshake`, `FailedSSLClientCertVerify` — SSL failures
+
+**Expected behavior:**
+
+* `HttpRequests`, `BytesReceived`, `BytesSent` increase during traffic tests
+* `BackendTimeouts` increase if backend service is stopped
+* SSL failures remain zero unless intentionally tested
+
+---
+
+## **4.2 Compute Instance Metrics (oci_computeagent)**
+
+**Namespace:**
+
+```
+oci_computeagent
+```
+
+**Filter:**
+
+```
+resourceId = "<INSTANCE_OCID>"
+```
+
+**Key metrics:**
+
+* `CpuUtilization`
+* `DiskUtilization`
+* `NetworkBytesIn`
+* `NetworkBytesOut`
+
+**Expected behavior:**
+
+* CPU spikes during stress tests
+* Network metrics increase during API traffic
+
+---
+
+## **4.3 VCN Metrics (oci_vcn)**
+
+**Namespace:**
+
+```
+oci_vcn
+```
+
+**Filter:**
+
+```
+resourceId = "<VCN_ID>"
+```
+
+**Key metrics:**
+
+* `BytesIngress`
+* `BytesEgress`
+* `PacketsIngress`
+* `PacketsEgress`
+
+---
+
+## **4.4 Quick Verification Checklist**
+
+* `oci_lbaas` namespace appears
+* `HttpRequests` updates during traffic loop
+* `BytesSent` / `BytesReceived` increase steadily
+* Compute `CpuUtilization` reacts to stress
+* VCN `BytesIngress` / `BytesEgress` reflect traffic flow
+
+---
+
 
 # **5. Custom Metrics Verification (OCI Console)**
 

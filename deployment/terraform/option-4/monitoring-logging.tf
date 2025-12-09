@@ -3,6 +3,32 @@
 ############################################################
 
 ########################
+# IAM for Custom Metrics (REQUIRED)
+########################
+
+# Dynamic Group for Backend Instances
+# Note: IAM resources must be created in home region (BOM)
+resource "oci_identity_dynamic_group" "backend_instances" {
+  provider       = oci.home_region
+  name           = "${var.project_name}-backend-instances"
+  compartment_id = var.tenancy_ocid
+  description    = "Dynamic group for backend instances to write custom metrics"
+  matching_rule  = "ALL {instance.compartment.id = '${var.compartment_ocid}'}"
+}
+
+# IAM Policy - Allow instances to write metrics
+# Note: IAM resources must be created in home region (BOM)
+resource "oci_identity_policy" "backend_metrics_policy" {
+  provider       = oci.home_region
+  compartment_id = var.tenancy_ocid
+  name           = "${var.project_name}-backend-metrics-policy"
+  description    = "Allow backend instances to write custom metrics"
+  statements = [
+    "ALLOW dynamic-group ${oci_identity_dynamic_group.backend_instances.name} TO use metrics IN compartment ${var.compartment_ocid}"
+  ]
+}
+
+########################
 # Log Groups
 ########################
 

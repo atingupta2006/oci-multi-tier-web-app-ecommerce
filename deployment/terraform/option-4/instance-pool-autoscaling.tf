@@ -38,16 +38,22 @@ locals {
   backend_cloud_agent_config_b64 = base64encode(local.backend_cloud_agent_config)
 
   # Cloud Agent monitoring configuration for backend (Prometheus metrics)
+  # Using prometheus_config format (NEW/CORRECT format)
   backend_cloud_agent_monitoring_config = jsonencode({
-    metricSources = [
-      {
-        name      = "bharatmart-prometheus-metrics"
-        type      = "prometheus"
-        url       = "http://localhost:3000/metrics"
-        interval  = 60
-        namespace = "bharatmart_custom"
-      }
-    ]
+    prometheus_config = {
+      scrape_configs = [
+        {
+          job_name     = "backend_metrics"
+          metrics_path = "/metrics"
+          scheme       = "http"
+          static_configs = [
+            {
+              targets = ["localhost:3000"]
+            }
+          ]
+        }
+      ]
+    }
   })
   backend_cloud_agent_monitoring_config_b64 = base64encode(local.backend_cloud_agent_monitoring_config)
 
@@ -250,6 +256,19 @@ resource "oci_core_instance_configuration" "backend_config" {
     launch_details {
       compartment_id = var.compartment_ocid
       shape          = var.backend_shape
+
+      # Enable Cloud Agent with Monitoring Plugin
+      # Note: Prometheus config is set via cloud-init script (see backend_cloud_init)
+      # Temporarily commented out - will enable via cloud-init only to avoid provisioning issues
+      # agent_config {
+      #   is_management_disabled = false
+      #   is_monitoring_disabled  = false
+      # 
+      #   plugins_config {
+      #     name          = "Monitoring"
+      #     desired_state = "ENABLED"
+      #   }
+      # }
 
       dynamic "shape_config" {
         for_each = local.is_backend_flexible_shape ? [1] : []

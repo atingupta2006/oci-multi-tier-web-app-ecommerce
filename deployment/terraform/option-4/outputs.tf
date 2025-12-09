@@ -245,3 +245,14 @@ output "monitoring_alarms" {
     network_high_egress       = oci_monitoring_alarm.network_high_egress.id
   }
 }
+
+# IAM OUTPUTS
+output "backend_instances_dynamic_group_id" {
+  description = "OCID of the dynamic group for backend instances"
+  value       = oci_identity_dynamic_group.backend_instances.id
+}
+
+output "backend_metrics_policy_id" {
+  description = "OCID of the IAM policy allowing backend instances to write metrics"
+  value       = oci_identity_policy.backend_metrics_policy.id
+}
