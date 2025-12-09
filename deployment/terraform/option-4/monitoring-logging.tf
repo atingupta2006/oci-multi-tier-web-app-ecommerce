@@ -6,6 +6,11 @@
 # IAM for Custom Metrics (REQUIRED)
 ########################
 
+# Data source to get compartment name (required for IAM policy statements)
+data "oci_identity_compartment" "backend_compartment" {
+  id = var.compartment_ocid
+}
+
 # Dynamic Group for Backend Instances
 # Note: IAM resources must be created in home region (BOM)
 resource "oci_identity_dynamic_group" "backend_instances" {
@@ -24,7 +29,7 @@ resource "oci_identity_policy" "backend_metrics_policy" {
   name           = "${var.project_name}-backend-metrics-policy"
   description    = "Allow backend instances to write custom metrics"
   statements = [
-    "ALLOW dynamic-group ${oci_identity_dynamic_group.backend_instances.name} TO use metrics IN compartment ${var.compartment_ocid}"
+    "ALLOW dynamic-group ${oci_identity_dynamic_group.backend_instances.name} TO manage metrics IN compartment ${data.oci_identity_compartment.backend_compartment.name}"
   ]
 }
 
