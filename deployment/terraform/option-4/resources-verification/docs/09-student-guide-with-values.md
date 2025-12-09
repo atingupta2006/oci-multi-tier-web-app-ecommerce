@@ -15,14 +15,18 @@ If this succeeds, continue.
 These values come directly from your Terraform output. Update only if your environment changes.
 
 ```bash
-export LB_IP="129.159.249.208"
-export BACKEND_API_URL="http://129.159.249.208:3000"
-export BACKEND_HEALTH_URL="http://129.159.249.208:3000/api/health"
+export LB_IP="130.162.223.147"
 
-export BACKEND_POOL_ID="ocid1.instancepool.oc1.eu-frankfurt-1.aaaaaaaay2zuwwzqi4kqlzoiugczntkdijlai2hot5tffrosbwtvk47yyu4a"
-export NOTIFICATION_TOPIC_ID="ocid1.onstopic.oc1.eu-frankfurt-1.amaaaaaahqssvraalyjsvt6opnlpba5w4qiibtslf7vqgtcthbbhoo27tt6q"
-export LOAD_BALANCER_ID="ocid1.loadbalancer.oc1.eu-frankfurt-1.aaaaaaaa7b7xd42kgu7ldpakm37tvkhg5slsfzk2fzuk4mecpgzjo4mqjniq"
-export BACKEND_HIGH_CPU_ALARM="ocid1.alarm.oc1.eu-frankfurt-1.amaaaaaahqssvraaaqrb6p6yfeizwniwpgikxuzpxl2vgt5bgroyzhmn2rya"
+export BACKEND_API_URL="http://130.162.223.147:3000"
+export BACKEND_HEALTH_URL="http://130.162.223.147:3000/api/health"
+
+export BACKEND_POOL_ID="ocid1.instancepool.oc1.eu-frankfurt-1.aaaaaaaarjgbq36x3kwo57qtxeu4gdqxbhkyny276im3bgebf5jqzirk2bka"
+
+export NOTIFICATION_TOPIC_ID="ocid1.onstopic.oc1.eu-frankfurt-1.amaaaaaahqssvraawcxs5yytyvyoizozg6apylzj6b4exx22sb5b2gpumq3a"
+
+export LOAD_BALANCER_ID="ocid1.loadbalancer.oc1.eu-frankfurt-1.aaaaaaaa43knlmmiw54sj3dogprgxuhnvd45cyw6qu5zjdppfeuzmoc55kfq"
+
+export BACKEND_HIGH_CPU_ALARM="ocid1.alarm.oc1.eu-frankfurt-1.amaaaaaahqssvraa2dpj32m5zfxuxirrqrtmzh7egsgicqrdv2filmhcjlq"
 ```
 
 ## **0.2 Auto-Detect Values Not Provided by Terraform**
@@ -111,98 +115,6 @@ Expected:
 * Custom metrics increase (`http_requests_total`)
 
 ---
-Below is a **short, clean, copy-paste-ready add-on** you can insert directly into the document *right after Section 3*.
-It explains **why some logs are not visible**, **what enables them**, and **whether future actions are needed** — without adding unnecessary detail.
-
----
-
-# **Why Some Logs May Not Be Visible**
-
-Not all log types appear automatically. Each log source has a different enabling mechanism:
-
-### **1. Load Balancer Access Log (Visible immediately)**
-
-Created automatically when Terraform enables:
-
-```
-oci_load_balancer_logging
-```
-
-→ Appears as soon as traffic hits the LB.
-
-### **2. Load Balancer Error Log (May be missing)**
-
-Appears **only if explicitly enabled** in Terraform.
-If missing, check `monitoring-logging.tf` for `"error"` log configuration.
-
-### **3. Backend & Frontend Logs (Unified Agent)**
-
-These logs appear **only when:**
-
-* The **OCI Logging Agent** is installed and running on the VM
-* Log file paths exist (e.g., NGINX logs, application logs)
-* Terraform created logging configurations for them
-
-If Unified Agent logs are missing, no CLI command will make them appear automatically — the agent must:
-
-1. Be running
-2. Have valid config files
-3. Have readable log files
-
-### **4. VCN Flow Logs (Visible immediately)**
-
-Created automatically by Terraform via:
-
-```
-oci_flow_log
-```
-
-→ Updated whenever network traffic flows.
-
----
-
-# **Will more log types appear later automatically?**
-
-❌ **No.**
-New log types do **not** appear just because traffic changes.
-
-✔ They only appear if Terraform (or manual config) explicitly enables them.
-
----
-
-# **How to make missing logs appear (Instructor Notes)**
-
-If a log type is missing:
-
-| Missing Log                 | How to Enable It                                            |
-| --------------------------- | ----------------------------------------------------------- |
-| LB Error Log                | Add `error` log block in Terraform → apply                  |
-| Backend App Log             | Ensure Unified Agent config exists + app writes logs        |
-| NGINX Logs                  | Ensure NGINX access/error logs exist + Unified Agent config |
-| Custom logs                 | Add another log source to Unified Agent config              |
-| Flow logs for other subnets | Add `oci_flow_log` resources                                |
-
-No manual commands can “force” these logs to appear.
-They require **Terraform config + working Unified Agent on VMs**.
-
----
-
-# Short Version (If You Prefer)
-
-```
-Not all logs appear automatically. LB Access/Flow logs are created by Terraform immediately. 
-LB Error logs appear only if explicitly enabled. Backend/Frontend logs depend on the OCI Unified Agent 
-running on the VM and the correct log file paths being present. No future command will make logs appear—
-they only appear when Terraform or Unified Agent configuration enables them.
-```
-
----
-Below is the **shortest and safest replacement** for Section 3, based ONLY on logs that **Terraform already creates** in your environment.
-This means **NO backend app logs** and **NO frontend NGINX logs**, because your Terraform configuration does *not* currently enable Unified Agent log sources.
-
-This replacement is fully aligned with your actual deployment and avoids mentioning logs that will never appear.
-
----
 
 # **3. Logging Verification (OCI Console)**
 
@@ -228,6 +140,19 @@ Terraform creates one flow log per subnet.
 
 Backend application logs and NGINX logs are **not configured in the current Terraform script**, so they will **not** appear in OCI Logging.
 No command can make them appear unless logging is explicitly configured for those VM log files.
+
+---
+
+
+### **4. VCN Flow Logs (Visible immediately)**
+
+Created automatically by Terraform via:
+
+```
+oci_flow_log
+```
+
+→ Updated whenever network traffic flows.
 
 ---
 
