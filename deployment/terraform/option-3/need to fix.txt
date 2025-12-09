@@ -1,3 +1,0 @@
-- Need to fix multi ad issues
-- Refer: 
-    - https://chatgpt.com/c/69351baa-7e74-8324-98b0-32ecac042eca
