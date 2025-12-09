@@ -13,27 +13,17 @@ resource "oci_logging_log_group" "bharatmart_log_group" {
 }
 
 ########################
-# VCN Flow Logs
+# VCN Flow Logs (Subnet Level)
 ########################
 
-# Capture Filter for VCN Flow Logs
-resource "oci_core_capture_filter" "vcn_flow_log_filter" {
-  compartment_id = var.compartment_ocid
-  display_name   = "${var.project_name}-flow-log-filter"
-  filter_type    = "FLOWLOG"
+# Note: Flow logs must be configured at subnet level, not VCN level
+# Valid category values: "subnet", "vnic", "instance", "networkloadbalancer"
+# Category "all" is not valid for VCN resources
 
-  # Capture all traffic
-  flow_log_capture_filter_rules {
-    is_enabled = true
-    priority   = 1
-    rule_action = "INCLUDE"
-  }
-}
-
-# VCN Flow Log
-resource "oci_logging_log" "vcn_flow_log" {
+# Flow Log - Public Subnet
+resource "oci_logging_log" "vcn_flow_log_public" {
   log_group_id = oci_logging_log_group.bharatmart_log_group.id
-  display_name = "${var.project_name}-vcn-flow-log"
+  display_name = "${var.project_name}-flow-log-public-subnet"
   log_type     = "SERVICE"
   is_enabled   = true
 
@@ -41,11 +31,26 @@ resource "oci_logging_log" "vcn_flow_log" {
     source {
       source_type = "OCISERVICE"
       service     = "flowlogs"
-      resource    = oci_core_vcn.bharatmart_vcn.id
-      category    = "all"
-      parameters = {
-        capture_filter_id = oci_core_capture_filter.vcn_flow_log_filter.id
-      }
+      resource    = oci_core_subnet.public_subnet.id
+      category    = "subnet"
+    }
+  }
+}
+
+# Flow Logs - Backend Subnets
+resource "oci_logging_log" "vcn_flow_log_backend" {
+  count        = local.max_backend_ads
+  log_group_id = oci_logging_log_group.bharatmart_log_group.id
+  display_name = "${var.project_name}-flow-log-backend-subnet-${count.index + 1}"
+  log_type     = "SERVICE"
+  is_enabled   = true
+
+  configuration {
+    source {
+      source_type = "OCISERVICE"
+      service     = "flowlogs"
+      resource    = oci_core_subnet.backend_subnet[count.index].id
+      category    = "subnet"
     }
   }
 }

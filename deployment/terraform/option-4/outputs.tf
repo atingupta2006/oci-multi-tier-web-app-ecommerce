@@ -186,9 +186,16 @@ output "log_group_id" {
   value       = oci_logging_log_group.bharatmart_log_group.id
 }
 
-output "vcn_flow_log_id" {
-  description = "OCID of the VCN flow log"
-  value       = oci_logging_log.vcn_flow_log.id
+output "vcn_flow_log_public_subnet_id" {
+  description = "OCID of the public subnet flow log"
+  value       = oci_logging_log.vcn_flow_log_public.id
+}
+
+output "vcn_flow_log_backend_subnet_ids" {
+  description = "OCIDs of the backend subnet flow logs"
+  value = {
+    for idx, log in oci_logging_log.vcn_flow_log_backend : "backend-subnet-${idx + 1}" => log.id
+  }
 }
 
 output "load_balancer_access_log_id" {

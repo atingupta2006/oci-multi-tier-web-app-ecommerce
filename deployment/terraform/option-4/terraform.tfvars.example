@@ -66,6 +66,29 @@ load_balancer_shape_min_mbps = 10
 load_balancer_shape_max_mbps = 10
 
 ########################################
+# OBSERVABILITY & MONITORING
+########################################
+# Note: Observability features are automatically enabled
+# No additional variables required - uses existing variables:
+# - compartment_ocid (for log groups and alarms)
+# - project_name (for resource naming)
+# - backend_pool_min_size / backend_pool_max_size (for instance pool alarms)
+#
+# Features enabled:
+# - VCN Flow Logs (network traffic monitoring)
+# - Load Balancer Access & Error Logs
+# - Frontend NGINX Access & Error Logs
+# - Backend Application Logs (api.log)
+# - Custom Prometheus Metrics Collection (backend only)
+# - 12 Monitoring Alarms (CPU, Memory, Disk, LB health, etc.)
+# - OCI Notification Topic for alarm alerts
+#
+# To receive alarm notifications:
+# 1. Go to OCI Console > Notifications > Topics
+# 2. Find topic: "{project_name}-alarm-topic"
+# 3. Subscribe with email, PagerDuty, Slack, etc.
+
+########################################
 # TAGS
 ########################################
 
