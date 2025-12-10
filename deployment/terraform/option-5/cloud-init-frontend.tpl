@@ -43,6 +43,14 @@ runcmd:
     fi
 
   ###########################################################################
+  # Disable OS Firewalls (CRITICAL FIX for LB/Public Connectivity)
+  ###########################################################################
+  - systemctl stop firewalld || true
+  - systemctl disable firewalld || true
+  - systemctl stop nftables || true
+  - systemctl disable nftables || true
+
+  ###########################################################################
   # Install Node.js (CRITICAL FIX — must be combined into one YAML block)
   ###########################################################################
   - |
@@ -54,7 +62,14 @@ runcmd:
   # Install dependencies + Build frontend (Vite)
   ###########################################################################
   - su - opc -c "cd /opt/bharatmart-frontend && npm install"
-  - su - opc -c "cd /opt/bharatmart-frontend && npm run build"
+  - su - opc -c "cd /opt/bharatmart-frontend && . ./.env && npm run build"
+
+  # === DEBUGGING: BUILD CHECK ===
+  - echo "### DEBUG: BUILD CHECK ###"
+  - echo "# Attempting to show .env file content (will be silent if file is missing):"
+  - cat /opt/bharatmart-frontend/.env 2>/dev/null || true
+  - echo "# Check build output existence (run this command manually):"
+  - echo "# ls -l /opt/bharatmart-frontend/dist/index.html"
 
   ###########################################################################
   # Copy Vite build output to NGINX
@@ -90,7 +105,26 @@ runcmd:
   - systemctl enable nginx
   - systemctl restart nginx
 
+
+  # === DEBUGGING: NGINX CHECK ===
+  - echo "### DEBUG: NGINX CHECK ###"
+  - echo "# Check NGINX Status:"
+  - echo "# sudo systemctl status nginx"
+  - echo "# Check Local Health (should return HTML):"
+  - echo "# curl http://localhost"
+  - echo "# View NGINX Error Log for failures:"
+  - echo "# sudo cat /var/log/nginx/error.log"
+
+
   ###########################################################################
   # Restart Cloud Agent to load UMA logging config
   ###########################################################################
   - systemctl restart oracle-cloud-agent || true
+
+
+  # === DEBUGGING: OBSERVABILITY CHECK ===
+  - echo "### DEBUG: AGENT CHECK ###"
+  - echo "# Check Agent Status:"
+  - echo "# sudo systemctl status oracle-cloud-agent"
+  - echo "# Verify Logging Config file (check paths and Log IDs):"
+  - echo "# sudo cat /opt/oracle-cloud-agent/plugins/logging/config.json"
