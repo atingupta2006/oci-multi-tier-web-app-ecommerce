@@ -6,7 +6,7 @@ write_files:
   ###########################################################################
   # 1. Write frontend .env file (Base64 decoded by Terraform)
   ###########################################################################
-  - path: /opt/bharatmart-frontend/.env
+  - path: /opt/bharatmart-frontend/.env.production
     permissions: "0644"
     owner: opc:opc
     encoding: b64
@@ -62,7 +62,7 @@ runcmd:
   # Install dependencies + Build frontend (Vite)
   ###########################################################################
   - su - opc -c "cd /opt/bharatmart-frontend && npm install"
-  - su - opc -c "cd /opt/bharatmart-frontend && . ./.env && npm run build"
+  - su - opc -c "cd /opt/bharatmart-frontend && npm run build"
 
   # === DEBUGGING: BUILD CHECK ===
   - echo "### DEBUG: BUILD CHECK ###"
