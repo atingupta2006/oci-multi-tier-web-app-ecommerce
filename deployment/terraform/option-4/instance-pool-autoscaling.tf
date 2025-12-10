@@ -237,8 +237,8 @@ locals {
         mkdir -p /opt/oracle-cloud-agent/plugins/monitoring
         echo "${local.backend_cloud_agent_monitoring_config_b64}" | base64 -d > /opt/oracle-cloud-agent/plugins/monitoring/config.json
 
-      - systemctl restart unified-monitoring-agent || true
-      - systemctl enable unified-monitoring-agent || true
+      - systemctl restart oracle-cloud-agent || true
+      - systemctl enable oracle-cloud-agent || true
   EOF
 }
 

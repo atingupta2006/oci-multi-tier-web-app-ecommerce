@@ -382,8 +382,8 @@ locals {
       - |
         cat > /etc/nginx/conf.d/bharatmart.conf << 'NGINXCONF'
         server {
-          listen 80 default_server;
-          listen [::]:80 default_server;
+          listen 80;
+          listen [::]:80;
 
           root /usr/share/nginx/html;
           index index.html;
@@ -394,6 +394,7 @@ locals {
             try_files $uri $uri/ /index.html;
           }
         }
+
         NGINXCONF
 
       # Remove default nginx config
@@ -429,8 +430,10 @@ locals {
       - |
         mkdir -p /opt/oracle-cloud-agent/plugins/logging
         echo "${local.frontend_cloud_agent_config_b64}" | base64 -d > /opt/oracle-cloud-agent/plugins/logging/config.json
-      - systemctl restart unified-monitoring-agent || true
-      - systemctl enable unified-monitoring-agent || true
+      - systemctl restart oracle-cloud-agent || true
+      - systemctl enable oracle-cloud-agent || true
+      - systemctl restart oracle-cloud-agent || true
+      - systemctl enable oracle-cloud-agent || true
   EOF
 }
 

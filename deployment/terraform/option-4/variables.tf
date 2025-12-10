@@ -132,7 +132,7 @@ variable "admin_password" {
 variable "os_version" {
   description = "Oracle Linux version for auto-discovered image"
   type        = string
-  default     = "9"
+  default     = "8"
 }
 
 variable "use_custom_images" {
